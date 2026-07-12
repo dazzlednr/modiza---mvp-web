@@ -1,0 +1,1 @@
+import type{Metadata}from"next";import"./globals.css";import{Header,Footer}from"@/components/layout";export const metadata:Metadata={title:"MODIZA | 대구 로컬 커뮤니티",description:"취향이 맞는 사람들과 우리만의 모임을 시작해보세요."};export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="ko"><body><Header/><main>{children}</main><Footer/></body></html>}
