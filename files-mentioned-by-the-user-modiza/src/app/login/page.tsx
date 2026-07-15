@@ -1,1 +1,13 @@
-import Link from"next/link";export default function Page(){return <section className="section"><div className="container panel" style={{maxWidth:460}}><p className="eyebrow">Welcome back</p><h1>모디자 로그인</h1><form className="form"><label>이메일<input type="email" className="field" placeholder="hello@example.com"/></label><label>비밀번호<input type="password" className="field" placeholder="8자 이상"/></label><Link className="btn btn-primary" href="/dashboard">로그인</Link></form><p className="muted" style={{fontSize:13}}>현재는 UI 데모이며 실제 인증은 다음 단계에서 연결합니다.</p></div></section>}
+import { redirect } from "next/navigation";
+import { AuthForm } from "@/components/auth/AuthForm";
+import { createAuthServerSupabaseClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
+
+export default async function Page({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  const supabase = await createAuthServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { next } = await searchParams;
+  if (user) redirect(next?.startsWith("/") && !next.startsWith("//") ? next : "/mypage");
+  return <section className="section"><div className="container panel" style={{ maxWidth: 480 }}><AuthForm mode="login" next={next} /></div></section>;
+}
