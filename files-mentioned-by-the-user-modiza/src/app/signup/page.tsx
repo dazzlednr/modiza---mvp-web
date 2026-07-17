@@ -8,7 +8,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
   const supabase = await createAuthServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { next } = await searchParams;
-  const destination = next?.startsWith("/") && !next.startsWith("//") ? next : "/mypage";
+  const destination = next?.startsWith("/") && !next.startsWith("//") ? next : "/onboarding";
   if (user) redirect(destination);
   return <section className="section"><div className="container panel" style={{ maxWidth: 480 }}><AuthForm mode="signup" next={destination} /></div></section>;
 }

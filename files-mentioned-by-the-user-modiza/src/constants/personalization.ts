@@ -1,0 +1,8 @@
+export const personalizationCategories = [
+  "\uB3C5\uC11C", "\uC601\uD654", "\uC74C\uC545", "\uC0AC\uC9C4", "\uC6B4\uB3D9", "\uAE00\uC4F0\uAE30", "\uCC3D\uC5C5", "\uC2A4\uD130\uB514",
+  "\uB124\uD2B8\uC6CC\uD0B9", "\uBD09\uC0AC", "\uACF5\uC5F0", "\uC804\uC2DC", "\uC5EC\uD589", "\uCDE8\uBBF8", "\uC694\uB9AC", "\uAE30\uD0C0",
+] as const;
+
+export const personalizationRegions = [
+  "\uB3D9\uC131\uB85C", "\uC218\uC131\uBABB", "\uACBD\uBD81\uB300", "\uACC4\uBA85\uB300", "\uC55E\uC0B0", "\uC804\uCCB4", "\uAE30\uD0C0 \uB300\uAD6C",
+] as const;

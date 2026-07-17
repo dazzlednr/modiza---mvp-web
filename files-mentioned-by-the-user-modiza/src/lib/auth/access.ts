@@ -46,7 +46,9 @@ export async function requireRole(
 ) {
   const intendedDestination = destination ?? await getRequestDestination();
   const current = await requireUser(intendedDestination);
-  if (!hasRole(current.profile, role)) {
+  if (!hasRole(current.profile, role) && !hasRole(current.profile, "admin")) {
+    if (role === "space_host") redirect("/space-host/apply");
+    if (role === "community_host") redirect(`/community-host/start?redirect=${encodeURIComponent(intendedDestination)}`);
     redirect(roleStartPath(intendedDestination, role));
   }
   return current;
@@ -58,8 +60,14 @@ export async function requireAnyRole(
 ) {
   const intendedDestination = destination ?? await getRequestDestination();
   const current = await requireUser(intendedDestination);
-  if (!hasAnyRole(current.profile, roles)) {
+  if (!hasAnyRole(current.profile, roles) && !hasRole(current.profile, "admin")) {
     redirect(roleStartPath(intendedDestination));
   }
+  return current;
+}
+
+export async function requireAdmin(destination = "/admin") {
+  const current = await requireUser(destination);
+  if (!hasRole(current.profile, "admin")) redirect("/mypage?error=forbidden");
   return current;
 }

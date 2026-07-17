@@ -1,0 +1,4 @@
+import { requireAdminDb } from "@/lib/auth/admin";
+import { getAdminAudit } from "@/repositories/adminRepository";
+export const dynamic="force-dynamic";
+export default async function Page(){const rows=await getAdminAudit(await requireAdminDb());return <><div className="page-heading"><p className="eyebrow">Audit log</p><h1>{"\uAD00\uB9AC\uC790 \uD65C\uB3D9 \uAE30\uB85D"}</h1><p className="muted">{"\uC911\uC694\uD55C \uAD00\uB9AC\uC790 \uC791\uC5C5\uC744 \uC218\uC815\uD560 \uC218 \uC5C6\uB294 \uAE30\uB85D\uC73C\uB85C \uBCF4\uAD00\uD569\uB2C8\uB2E4."}</p></div><div className="admin-list">{rows.length?rows.map((r)=><article className="dashboard-row" key={r.id}><div><strong>{r.actionType}</strong><p>{r.targetType} / {r.targetId??"-"}{r.reason?` / ${r.reason}`:""}</p></div><time>{new Date(r.createdAt).toLocaleString("ko-KR")}</time></article>):<div className="empty">{"\uAD00\uB9AC\uC790 \uD65C\uB3D9 \uAE30\uB85D\uC774 \uC5C6\uC2B5\uB2C8\uB2E4."}</div>}</div></>}

@@ -7,6 +7,7 @@ import {
   getCommunityByIdForDashboard,
   updateCommunity,
   uploadCommunityThumbnail,
+  uploadCommunityActivityImages,
 } from "@/repositories/communityRepository";
 import { syncInitialCommunitySchedule } from "@/repositories/scheduleRepository";
 import { getSpaceById } from "@/repositories/spaceRepository";
@@ -66,7 +67,6 @@ export async function PUT(
       recruitmentStartAt: new Date().toISOString(),
       recruitmentEndAt: new Date(new Date(koreanTimestamp(parsed.data.nextMeetingAt)!).getTime() - 60 * 60 * 1000).toISOString(),
     };
-    if (values.category === "기타" && !values.customCategory?.trim()) return NextResponse.json({ message: "기타 카테고리명을 입력해 주세요." }, { status: 400 });
     if (values.detailedRegion === "기타" && !values.customRegion?.trim()) return NextResponse.json({ message: "기타 지역명을 입력해 주세요." }, { status: 400 });
     if (new Date(values.nextMeetingAt).getTime() < Date.now() + 60 * 60 * 1000) return NextResponse.json({ message: "모임 시작은 현재부터 1시간보다 뒤로 설정해 주세요." }, { status: 400 });
     const current = await getCommunityByIdForDashboard(db, id);
@@ -75,13 +75,15 @@ export async function PUT(
     const space = values.linkedSpaceId
       ? await getSpaceById(db, values.linkedSpaceId)
       : null;
-    if (values.linkedSpaceId && (!space || space.status !== "active")) {
+    if (values.linkedSpaceId && (!space || space.status !== "approved")) {
       return NextResponse.json({ message: "선택한 공간을 사용할 수 없어요." }, { status: 400 });
     }
     if (space && values.capacity > space.maxCapacity) {
       return NextResponse.json({ message: "선택한 공간의 수용 인원을 초과했어요." }, { status: 400 });
     }
     const image = form.get("thumbnail");
+    const activityImages = form.getAll("activityImages").filter((item): item is File => item instanceof File && item.size > 0);
+    if (activityImages.length > 8 || activityImages.some((item) => !allowed.includes(item.type) || item.size > 5_242_880)) return NextResponse.json({ message: "활동 사진은 최대 8장, 장당 5MB 이하로 선택해 주세요." }, { status: 400 });
     if (
       image instanceof File &&
       image.size &&
@@ -94,6 +96,7 @@ export async function PUT(
     }
     await updateCommunity(db, id, values);
     if (image instanceof File && image.size) await uploadCommunityThumbnail(db, id, image);
+    if (activityImages.length) await uploadCommunityActivityImages(db, id, activityImages);
     if (current.status === "published") {
       await syncInitialCommunitySchedule(db, {
         communityId: id,

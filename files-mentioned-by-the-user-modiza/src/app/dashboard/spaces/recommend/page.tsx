@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
+  Building2,
   CalendarDays,
   Check,
   LoaderCircle,
@@ -38,19 +39,42 @@ export default function SpaceRecommendationPage() {
   const [response, setResponse] = useState<SpaceRecommendationResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [communityId, setCommunityId] = useState("");
 
   useEffect(() => {
-    const saved = localStorage.getItem(storageKey);
-    if (!saved) return;
+    let next = initial;
     let frame = 0;
     try {
-      const parsed = SpaceRecommendationInputSchema.safeParse(JSON.parse(saved));
-      if (parsed.success) {
-        frame = requestAnimationFrame(() => setForm(parsed.data));
-      }
+      const saved = localStorage.getItem(storageKey);
+      const parsed = saved ? SpaceRecommendationInputSchema.safeParse(JSON.parse(saved)) : null;
+      if (parsed?.success) next = parsed.data;
     } catch {
       localStorage.removeItem(storageKey);
     }
+
+    const params = new URLSearchParams(window.location.search);
+    const communityContext = params.get("communityId") ?? "";
+    const meetingType = params.get("meetingType");
+    const region = params.get("region");
+    const capacity = Number(params.get("capacity"));
+    const budget = Number(params.get("budget"));
+    const date = params.get("date");
+    next = {
+      ...next,
+      ...(meetingType && meetingTypes.includes(meetingType as (typeof meetingTypes)[number])
+        ? { meetingType: meetingType as SpaceRecommendationInput["meetingType"] }
+        : {}),
+      ...(region && recommendationRegions.includes(region as (typeof recommendationRegions)[number])
+        ? { region: region as SpaceRecommendationInput["region"] }
+        : {}),
+      ...(Number.isFinite(capacity) && capacity > 0 ? { capacity } : {}),
+      ...(Number.isFinite(budget) && budget >= 0 ? { budget } : {}),
+      ...(date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? { date } : {}),
+    };
+    frame = requestAnimationFrame(() => {
+      setForm(next);
+      setCommunityId(communityContext);
+    });
     return () => cancelAnimationFrame(frame);
   }, []);
 
@@ -250,24 +274,24 @@ export default function SpaceRecommendationPage() {
             ) : (
               <div className="grid" style={{ marginTop: 20 }}>
                 {response.results.map((space) => (
-                  <article className="card" key={space.id}>
-                    <div
-                      className="recommendation-card-grid"
-                      style={{
-                        display: "grid",
-                      }}
-                    >
-                      <div className="cover" style={{ height: "100%" }}>
-                        {space.thumbnailUrl && (
+                  <article className="card space-recommendation-card" key={space.id}>
+                    <div className="recommendation-card-grid">
+                      <div className="cover space-recommendation-cover">
+                        {space.thumbnailUrl ? (
                           <Image
                             src={space.thumbnailUrl}
                             alt={space.name}
                             fill
                             sizes="(max-width: 700px) 100vw, 340px"
                           />
+                        ) : (
+                          <div className="space-recommendation-placeholder" aria-label="등록된 대표 사진 없음">
+                            <Building2 size={34} />
+                            <span>대표 사진 준비 중</span>
+                          </div>
                         )}
                       </div>
-                      <div className="card-body">
+                      <div className="card-body space-recommendation-body">
                         <div className="meta" style={{ justifyContent: "space-between" }}>
                           <span className="tag">추천 점수 {space.score}점</span>
                           <span>
@@ -303,15 +327,15 @@ export default function SpaceRecommendationPage() {
                           ))}
                         </div>
                         <div className="meta" style={{ marginTop: 20 }}>
-                          <Link className="btn btn-ghost" href={`/spaces/${space.slug}`}>
+                          <Link className="btn btn-ghost" href={`/spaces/${space.slug}${communityId ? `?requestCommunityId=${encodeURIComponent(communityId)}` : ""}`}>
                             자세히 보기
                           </Link>
-                          <Link
+                          {communityId && <Link
                             className="btn btn-primary"
-                            href={`/communities/register?spaceId=${space.id}&activityType=${encodeURIComponent(form.meetingType)}&capacity=${form.capacity}&region=${encodeURIComponent(form.region)}&date=${form.date}`}
+                            href={`/spaces/${space.slug}?requestCommunityId=${encodeURIComponent(communityId)}`}
                           >
-                            이 공간으로 모임 만들기
-                          </Link>
+                            이 공간 선택하기
+                          </Link>}
                         </div>
                       </div>
                     </div>

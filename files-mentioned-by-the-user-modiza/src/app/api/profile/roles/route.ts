@@ -4,7 +4,7 @@ import { createAuthServerSupabaseClient } from "@/lib/supabase/server";
 import { addUserRole } from "@/repositories/profileRepository";
 
 const roleRequestSchema = z.object({
-  role: z.enum(["community_host", "space_host"]),
+  role: z.literal("community_host"),
 });
 
 export async function POST(request: Request) {

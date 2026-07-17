@@ -26,7 +26,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     } catch {
       // The header still works before the profiles migration is applied.
     }
-    headerUser = { email: user.email, nickname, roles: userRoles };
+    headerUser = { id: user.id, email: user.email, nickname, roles: userRoles };
   }
   return <html lang="ko"><body><Header user={headerUser} /><main>{children}</main><Footer /></body></html>;
 }

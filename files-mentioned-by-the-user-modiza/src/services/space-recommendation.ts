@@ -60,7 +60,7 @@ export function recommendSpaces(
       (required) => !includesAny(facilities, [required]),
     );
 
-    if (space.status !== "active") reasons.push("운영 중인 공간이 아님");
+    if (space.status !== "approved") reasons.push("인증 승인된 공개 공간이 아님");
     if (space.maxCapacity < input.capacity) reasons.push("최대 인원 부족");
     if (missingFacilities.length) {
       reasons.push(`필수 시설 없음: ${missingFacilities.join(", ")}`);

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { normalizeCommunityCategories } from "@/constants/taxonomy";
 import { normalizeRoles, hasRole } from "@/lib/auth/roles";
 import type { Profile, UserRole } from "@/types/profile";
 
@@ -12,8 +13,13 @@ function map(row: Record<string, unknown>): Profile {
     mainRegion: row.main_region ? String(row.main_region) : "대구 전체",
     detailedRegion: row.detailed_region ? String(row.detailed_region) : null,
     customRegion: row.custom_region ? String(row.custom_region) : null,
-    interestCategories: Array.isArray(row.interest_categories) ? row.interest_categories.map(String) : [],
+    interestCategories: normalizeCommunityCategories(Array.isArray(row.interest_categories) ? row.interest_categories.map(String) : []),
+    interestedCategories: normalizeCommunityCategories(Array.isArray(row.interested_categories) ? row.interested_categories.map(String) : Array.isArray(row.interest_categories) ? row.interest_categories.map(String) : []),
+    interestedRegions: Array.isArray(row.interested_regions) ? row.interested_regions.map(String) : [],
     roles: normalizeRoles(row.roles),
+    accountStatus: row.account_status === "suspended" ? "suspended" : "active",
+    communityHostRevokedAt: row.community_host_revoked_at ? String(row.community_host_revoked_at) : null,
+    communityHostRevocationReason: row.community_host_revocation_reason ? String(row.community_host_revocation_reason) : null,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
   };
@@ -39,7 +45,7 @@ export async function getCurrentProfile(db: SupabaseClient) {
 
 export async function addUserRole(
   db: SupabaseClient,
-  role: "community_host" | "space_host",
+  role: "community_host",
 ) {
   const { data, error } = await db.rpc("add_current_user_role", {
     requested_role: role,
@@ -61,7 +67,7 @@ export async function hasUserRole(
 export async function updateProfile(
   db: SupabaseClient,
   userId: string,
-  values: { nickname?: string; profileImage?: string | null; bio?: string | null; mainRegion?: string; detailedRegion?: string | null; customRegion?: string | null; interestCategories?: string[] },
+  values: { nickname?: string; profileImage?: string | null; bio?: string | null; mainRegion?: string; detailedRegion?: string | null; customRegion?: string | null; interestCategories?: string[]; interestedCategories?: string[]; interestedRegions?: string[] },
 ) {
   const { data, error } = await db
     .from("profiles")
@@ -73,6 +79,8 @@ export async function updateProfile(
       ...(values.detailedRegion !== undefined && { detailed_region: values.detailedRegion }),
       ...(values.customRegion !== undefined && { custom_region: values.customRegion }),
       ...(values.interestCategories !== undefined && { interest_categories: values.interestCategories }),
+      ...(values.interestedCategories !== undefined && { interested_categories: values.interestedCategories }),
+      ...(values.interestedRegions !== undefined && { interested_regions: values.interestedRegions }),
     })
     .eq("id", userId)
     .select("*")

@@ -1,5 +1,51 @@
 # MODIZA MVP
 
+## Admin and verified space-host workflow
+
+Run `supabase/migrations/202607150002_admin_host_verification.sql` after the earlier
+Part 4 migrations. It adds the private `space-host-evidence` bucket, host
+applications, reports, account suspension fields, moderation metadata, audit logs,
+and the related RLS policies.
+
+Users cannot grant themselves the `space_host` or `admin` role. A user submits an
+application at `/space-host/apply`; only an active administrator can approve it at
+`/admin/host-applications`. Approval is performed by the
+`process_space_host_application` RPC so the application state, profile roles, and
+audit record change together. Rejected users can submit a corrected application,
+while the partial unique index prevents duplicate pending applications.
+
+Evidence is private, limited to one PDF/JPG/PNG file up to 10 MB, and is opened by
+administrators through a short-lived signed URL. All administrator pages perform a
+server-side admin check before creating a Service Role database client. Service
+Role credentials never reach the browser.
+
+To promote the first administrator, run this once in the Supabase SQL Editor with
+the real Auth user UUID:
+
+```sql
+update public.profiles
+set roles = public.normalize_profile_roles(roles || array['admin']::text[])
+where id = 'AUTH_USER_UUID';
+```
+
+The administrator console is available at `/admin` and includes applications,
+spaces, communities, members, reports, and an immutable activity log.
+
+## Supabase Auth URLs
+
+In Supabase Dashboard > Authentication > URL Configuration, set `Site URL` to the
+production Vercel URL. Add both local and production callback URLs to Redirect URLs:
+
+- `http://localhost:3000/auth/callback`
+- `http://127.0.0.1:3000/auth/callback`
+- `https://YOUR_VERCEL_DOMAIN/auth/callback`
+- `https://*-YOUR_TEAM.vercel.app/auth/callback` when preview deployments are used
+
+The signup form sends the current browser origin as `emailRedirectTo`. If that URL
+is not allow-listed, Supabase falls back to Site URL, which can incorrectly send a
+production signup email to localhost. The home page also forwards legacy root
+confirmation links containing `?code=` to `/auth/callback`.
+
 Part 4-3의 사용자별 소유권, RLS, 실행 순서는 [Part 4-3 문서](docs/part-4-3-ownership.md)를 참고한다.
 
 ## 공간 추천 엔진
@@ -27,6 +73,22 @@ OpenAI는 공간을 고르거나 점수를 변경하지 않는다. 규칙 엔진
 정렬된 추천 조건과 추천 공간의 점수·근거·가격을 SHA-256으로 해시한다. `space_recommendation_reasons` 테이블에서 `condition_hash + space_id` 조합으로 기존 설명을 조회하고, 없는 공간에 대해서만 OpenAI를 호출한다. 최근 입력 조건은 브라우저 `localStorage`에 저장해 다음 방문 때 복원한다.
 
 ### 필요한 환경변수
+
+## 선택형 커뮤니티 운영 제안
+
+운영지원의 참가자 안내문, 체크리스트, 진행 순서 제안은 운영자가 각 화면의 `제안받기` 버튼을 눌렀을 때만 서버에서 OpenAI Responses API를 호출한다. 페이지 진입이나 일정·체크리스트 저장만으로는 호출하지 않으며 결과도 자동 저장하지 않는다. 안내문은 운영자가 입력칸에 적용하고, 체크리스트는 선택 항목을 추가하고, 진행 순서는 전체 적용을 확인한 경우에만 저장된다.
+
+세 Route Handler는 로그인, `community_host` 역할, `communities.owner_id` 소유권을 다시 확인한다. OpenAI에는 커뮤니티·일정·장소의 운영 정보만 전달하고 신청자 이름, 연락처, 이메일, 신청 답변은 전달하지 않는다. 응답은 Zod 구조화 출력으로 검증하며 모델과 프롬프트는 각각 `src/config/openai.ts`, `src/lib/operations/prompts.ts`에서 관리한다.
+
+필요한 환경변수:
+
+```env
+ENABLE_OPERATION_AI=true
+OPENAI_OPERATION_MODEL=gpt-5.4-mini
+OPENAI_API_KEY=...
+```
+
+`ENABLE_OPERATION_AI=false`이면 제안 버튼만 숨겨지고 직접 작성, 체크리스트, 일정 관리 기능은 그대로 동작한다. 진행 순서 저장을 위해 `supabase/migrations/202607160005_operation_ai_agenda.sql`을 Supabase SQL Editor에서 한 번 실행해야 한다.
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=

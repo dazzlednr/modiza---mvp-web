@@ -1,0 +1,8 @@
+import Link from "next/link";
+import {SpaceHostApplicationForm} from "@/components/space/SpaceHostApplicationForm";
+import {requireUser} from "@/lib/auth/access";
+import {hasAnyRole} from "@/lib/auth/roles";
+import {createAdminSupabaseClient} from "@/lib/supabase/admin";
+import {getMyLatestHostApplication} from "@/repositories/adminRepository";
+export const dynamic="force-dynamic";
+export default async function Page(){const{user,profile}=await requireUser("/space-host/apply");if(hasAnyRole(profile,["space_host","admin"]))return <section className="section"><div className="container panel" style={{maxWidth:760}}><h1>공간 운영자 자격이 확인되었습니다.</h1><p className="muted">이 자격으로 공간 등록 신청을 시작할 수 있어요. 새로 등록하는 각 공간은 별도의 공간 인증과 관리자 승인을 거쳐야 공개됩니다.</p><Link className="btn btn-primary" href="/spaces/register">공간 등록 신청하기</Link></div></section>;const latest=await getMyLatestHostApplication(createAdminSupabaseClient(),user.id);return <section className="section dashboard-shell"><div className="container" style={{maxWidth:900}}><p className="eyebrow">Space host qualification</p><h1 className="section-title">공간 운영자 등록</h1><p className="muted" style={{lineHeight:1.8}}>공간을 등록 신청할 수 있는 운영자 자격을 확인합니다. 자격 승인 후에도 등록하는 각 공간은 별도의 공간 인증을 받아야 공개됩니다.</p>{latest?.status==="pending"?<div className="panel" style={{marginTop:28}}><span className="tag application-pending">자격 심사 중</span><h2>공간 운영자 자격을 확인하고 있어요</h2><p>승인이 완료되면 공간 등록 신청을 시작할 수 있습니다.</p></div>:<>{latest?.status==="rejected"&&<div className="error-summary" style={{margin:"24px 0"}}>반려 사유: {latest.rejectionReason??"관리자 확인이 필요합니다."} 내용을 보완해 다시 제출할 수 있어요.</div>}<SpaceHostApplicationForm/></>}</div></section>}

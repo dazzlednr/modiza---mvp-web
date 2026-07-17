@@ -12,6 +12,14 @@ export default async function Page({
   searchParams: Promise<{ role?: string; redirect?: string }>;
 }) {
   const query = await searchParams;
+  if (!query.role || query.role === "community_host") {
+    const next = safeInternalPath(query.redirect, "/communities/register");
+    redirect(`/community-host/start?redirect=${encodeURIComponent(next)}`);
+  }
+  if (query.role === "space_host") {
+    const next = safeInternalPath(query.redirect, "/dashboard/spaces");
+    redirect(`/space-host/apply?redirect=${encodeURIComponent(next)}`);
+  }
   const requestedRole = isSelfActivatableRole(query.role) ? query.role : undefined;
   const redirectTo = safeInternalPath(query.redirect, "/dashboard");
   const currentPath = `/role/start?${new URLSearchParams({

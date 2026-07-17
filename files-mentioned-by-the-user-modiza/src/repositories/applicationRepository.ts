@@ -11,6 +11,13 @@ export async function getMyApplications(db: SupabaseClient) {
   return (data ?? []).map(map);
 }
 
+export async function getMyApplicationById(db: SupabaseClient, applicationId: string) {
+  const userId = await currentUserId(db);
+  const { data, error } = await db.from("community_applications").select("*,communities(name,slug,next_meeting_at)").eq("id", applicationId).eq("applicant_user_id", userId).maybeSingle();
+  if (error) throw error;
+  return data ? map(data) : null;
+}
+
 export async function getApplicationsForMyCommunities(db: SupabaseClient) {
   const userId = await currentUserId(db);
   const { data, error } = await db.from("community_applications").select("*,communities!inner(name,slug,next_meeting_at,owner_id)").eq("communities.owner_id", userId).order("created_at", { ascending: false });
@@ -41,5 +48,45 @@ export async function createApplicationForCurrentUser(db: SupabaseClient, commun
 export const createApplication = createApplicationForCurrentUser;
 
 export async function cancelMyApplication(db: SupabaseClient, id: string) { const { error } = await db.rpc("cancel_my_application", { p_application_id: id }); if (error) throw error; }
-export async function updateApplicationStatusAsOwner(db: SupabaseClient, id: string, status: ApplicationStatus, operatorMemo?: string | null) { const { error } = await db.rpc("change_application_status_as_owner", { p_application_id: id, p_status: status, p_operator_memo: operatorMemo ?? null }); if (error) { if (error.message.includes("CAPACITY_FULL")) throw new Error("CAPACITY_FULL"); throw error; } }
+export type ApplicationDecisionResult = {
+  applicationId: string;
+  communityId: string;
+  operatorUserId: string;
+  applicantUserId: string | null;
+  previousStatus: ApplicationStatus;
+  status: ApplicationStatus;
+  notificationCreated: boolean;
+  notificationId: string | null;
+  openChatRegistered: boolean;
+};
+
+export async function updateApplicationStatusAsOwner(
+  db: SupabaseClient,
+  id: string,
+  status: ApplicationStatus,
+  operatorMemo?: string | null,
+): Promise<ApplicationDecisionResult> {
+  const { data, error } = await db.rpc("process_community_application_decision", {
+    p_application_id: id,
+    p_status: status,
+    p_operator_memo: operatorMemo ?? null,
+  });
+  if (error) {
+    if (error.message.includes("CAPACITY_FULL")) throw new Error("CAPACITY_FULL");
+    throw error;
+  }
+  const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
+  if (!row) throw new Error("APPLICATION_DECISION_FAILED");
+  return {
+    applicationId: String(row.application_id),
+    communityId: String(row.community_id),
+    operatorUserId: String(row.operator_user_id),
+    applicantUserId: row.applicant_user_id ? String(row.applicant_user_id) : null,
+    previousStatus: String(row.previous_status) as ApplicationStatus,
+    status: String(row.status) as ApplicationStatus,
+    notificationCreated: Boolean(row.notification_created),
+    notificationId: row.notification_id ? String(row.notification_id) : null,
+    openChatRegistered: Boolean(row.open_chat_registered),
+  };
+}
 export const updateApplication = updateApplicationStatusAsOwner;

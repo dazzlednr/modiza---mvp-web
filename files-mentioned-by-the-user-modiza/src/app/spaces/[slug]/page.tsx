@@ -1,8 +1,32 @@
-import Image from "next/image";
 import { notFound } from "next/navigation";
-import { DetailItem } from "@/components/common/DetailItem";
-import { formatRegion } from "@/constants/taxonomy";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import Link from "next/link";
+import { SpaceDetailContent } from "@/components/space/SpaceDetailContent";
+import { SpaceSelectionButton } from "@/components/space/SpaceSelectionButton";
+import { getCurrentUserWithProfile } from "@/lib/auth/access";
+import { hasAnyRole } from "@/lib/auth/roles";
+import { createAuthServerSupabaseClient } from "@/lib/supabase/server";
 import { getSpaceBySlug } from "@/repositories/spaceRepository";
+
 export const dynamic = "force-dynamic";
-export default async function Page({ params }: { params: Promise<{ slug: string }> }) { const raw = (await params).slug; let slug = raw; try { slug = decodeURIComponent(raw); } catch { /* invalid */ } const space = await getSpaceBySlug(createServerSupabaseClient(), slug); if (!space) notFound(); return <section className="section"><div className="container"><div className="grid cards">{space.images.map((image) => <div className="cover card" key={image.id}><Image src={image.publicUrl} fill alt={space.name} /></div>)}</div><div className="detail-grid" style={{ marginTop: 40 }}><article><span className="tag">{space.spaceType}</span><h1 className="section-title">{space.name}</h1><p style={{ fontSize: 20 }}>{space.shortDescription}</p><p className="muted">{space.description}</p><h2>공간 정보</h2><div className="detail-info-grid"><DetailItem label="지역" value={formatRegion(space.mainRegion, space.detailedRegion, space.customRegion)} /><DetailItem label="주소" value={`${space.address} ${space.addressDetail ?? ""}`} /><DetailItem label="이용 가격" value={`시간당 ${space.pricePerHour.toLocaleString("ko-KR")}원 · 최소 ${space.minimumHours}시간`} /><DetailItem label="수용 인원" value={`적정 ${space.suitableCapacity ?? "-"}명 · 최대 ${space.maxCapacity}명`} /><DetailItem label="이용 요일" value={space.availableDays.join(", ")} /><DetailItem label="이용 시간" value={`${space.availableStartTime ?? "-"}~${space.availableEndTime ?? "-"}`} /></div><h2>시설과 분위기</h2><div className="meta">{[...space.facilities, ...space.moods, ...space.suitableActivities].map((tag) => <span className="tag" key={tag}>{tag}</span>)}</div></article><aside className="panel sidebar"><h3>운영 조건</h3><div className="detail-info-grid single"><DetailItem label="소음" value={space.noiseLevel} /><DetailItem label="음식물" value={space.foodAllowed ? "가능" : "불가"} /><DetailItem label="주류" value={space.alcoholAllowed ? "가능" : "불가"} /><DetailItem label="주차" value={space.parkingAvailable ? "가능" : "불가"} /></div><button disabled className="btn btn-ghost">문의 기능 준비 중</button></aside></div></div></section>; }
+
+export default async function SpaceDetailPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ requestCommunityId?: string }> }) {
+  const raw = (await params).slug;
+  let slug = raw;
+  try { slug = decodeURIComponent(raw); } catch { /* invalid encoded slug */ }
+  const space = await getSpaceBySlug(await createAuthServerSupabaseClient(), slug);
+  if (!space) notFound();
+  const current = await getCurrentUserWithProfile();
+  const initialCommunityId = (await searchParams).requestCommunityId ?? "";
+  const detailPath = `/spaces/${space.slug}?requestCommunityId=${encodeURIComponent(initialCommunityId)}`;
+  const action = !initialCommunityId
+    ? undefined
+    : !current
+      ? <Link className="btn btn-primary" href={`/login?redirect=${encodeURIComponent(detailPath)}`}>로그인 후 이 공간 선택하기</Link>
+      : hasAnyRole(current.profile, ["community_host", "admin"])
+        ? <SpaceSelectionButton spaceId={space.id} communityId={initialCommunityId} />
+        : undefined;
+
+  return <section className="section"><div className="container space-detail-page">
+    <SpaceDetailContent space={space} actions={action} />
+  </div></section>;
+}

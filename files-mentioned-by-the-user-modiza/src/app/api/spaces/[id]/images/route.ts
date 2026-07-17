@@ -10,11 +10,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const { supabase, user } = await requireApiUser("space_host"); const id = (await params).id; const space = await getMySpaceById(supabase, id);
     if (!space) return NextResponse.json({ message: "공간을 찾을 수 없어요." }, { status: 404 });
     const data = await request.formData(); const files = data.getAll("images").filter((item) => item instanceof File) as File[];
-    if (space.images.length + files.length > 8) return NextResponse.json({ message: "최대 8장까지 업로드할 수 있어요." }, { status: 400 });
+    if (space.images.length + files.length > 10) return NextResponse.json({ message: "사진은 최대 10장까지 등록할 수 있어요." }, { status: 400 });
     const created = [];
     for (const file of files) {
-      if (!allowed.includes(file.type)) return NextResponse.json({ message: "지원하지 않는 이미지 형식이에요." }, { status: 400 });
-      if (file.size > 5_242_880) return NextResponse.json({ message: "이미지 크기는 5MB 이하여야 해요." }, { status: 400 });
+      if (!allowed.includes(file.type)) return NextResponse.json({ message: "JPG, PNG 또는 WEBP 형식의 사진을 올려주세요." }, { status: 400 });
+      if (file.size > 10_485_760) return NextResponse.json({ message: "사진 한 장의 용량은 최대 10MB까지 가능합니다." }, { status: 400 });
       const extension = file.name.split(".").pop()?.replace(/[^a-z0-9]/gi, "") || "webp"; const path = `${user.id}/${id}/${crypto.randomUUID()}.${extension}`;
       const upload = await supabase.storage.from("space-images").upload(path, file, { contentType: file.type }); if (upload.error) throw upload.error;
       const url = supabase.storage.from("space-images").getPublicUrl(path).data.publicUrl;

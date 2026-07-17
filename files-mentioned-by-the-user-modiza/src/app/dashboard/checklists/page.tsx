@@ -13,9 +13,13 @@ import {
 } from "@/repositories/checklistRepository";
 import type { Community } from "@/types/community";
 import type { ChecklistGroup } from "@/types/operator";
+import type { Schedule } from "@/types/operator";
+import { listSchedules } from "@/repositories/scheduleRepository";
+import { ChecklistSuggestionPanel } from "@/components/operations/ChecklistSuggestionPanel";
 
 export default function Page() {
   const [groups, setGroups] = useState<ChecklistGroup[]>([]);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
   const [communityId, setCommunityId] = useState("");
   const [groupTitle, setGroupTitle] = useState("");
@@ -32,6 +36,7 @@ export default function Page() {
   useEffect(() => {
     Promise.all([
       reload(),
+      listSchedules(createBrowserSupabaseClient()).then(setSchedules),
       fetch("/api/communities", { cache: "no-store" })
         .then((response) => {
           if (!response.ok) throw new Error("COMMUNITIES_LOAD_FAILED");
@@ -39,7 +44,8 @@ export default function Page() {
         })
         .then((items) => {
           setCommunities(items);
-          setCommunityId(items[0]?.id ?? "");
+          const requested = new URLSearchParams(window.location.search).get("communityId");
+          setCommunityId(items.some((item) => item.id === requested) ? requested! : items[0]?.id ?? "");
         }),
     ]).catch(() => setError("체크리스트를 불러오지 못했어요.")).finally(() => setLoading(false));
   }, []);
@@ -117,7 +123,7 @@ export default function Page() {
         {!communities.length ? (
           <div className="empty"><CheckSquare2 size={40} /><h3>운영 중인 커뮤니티가 없습니다.</h3><p className="muted">커뮤니티를 먼저 만든 후 체크리스트를 추가할 수 있어요.</p></div>
         ) : <>
-          <label>커뮤니티<select className="field" value={communityId} onChange={(event) => { setCommunityId(event.target.value); setShowCreate(false); }}><option value="">선택</option>{communities.map((community) => <option value={community.id} key={community.id}>{community.name}</option>)}</select></label>
+          <div className="checklist-toolbar"><label>커뮤니티<select className="field" value={communityId} onChange={(event) => { setCommunityId(event.target.value); setShowCreate(false); }}><option value="">선택</option>{communities.map((community) => <option value={community.id} key={community.id}>{community.name}</option>)}</select></label><ChecklistSuggestionPanel communityId={communityId} schedules={schedules} groups={visible} onApplied={reload}/></div>
 
           {showCreate && <form className="panel checklist-create" onSubmit={addGroup}>
             <div><h2>새 체크리스트 만들기</h2><p className="muted">예: 모임 전 준비, 장소 준비, 홍보 및 모집</p></div>

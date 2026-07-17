@@ -26,7 +26,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (community.recruitmentEndAt && new Date(community.recruitmentEndAt) <= new Date()) return NextResponse.json({ message: "현재 모집이 마감되었어요." }, { status: 400 });
     if (community.currentMembers >= community.capacity) return NextResponse.json({ message: "모집 정원이 모두 찼어요." }, { status: 400 });
     const application = await createApplication(supabase, community.id, community.name, parsed.data);
-    return NextResponse.json({ id: application.id, receipt: application.id.slice(0, 8).toUpperCase(), communityName: community.name, nextMeetingAt: community.nextMeetingAt, status: "pending" }, { status: 201 });
+    return NextResponse.json({ communityName: community.name, nextMeetingAt: community.nextMeetingAt, status: application.status }, { status: 201 });
   } catch (error) {
     const authStatus = apiAuthStatus(error);
     if (authStatus) return NextResponse.json({ message: error instanceof Error ? error.message : "로그인이 필요해요." }, { status: authStatus });

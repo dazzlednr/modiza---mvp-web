@@ -7,11 +7,15 @@ import {
   getCommunitiesForDashboard,
   getCommunityByIdForDashboard,
   uploadCommunityThumbnail,
+  uploadCommunityActivityImages,
 } from "@/repositories/communityRepository";
 import { createInitialCommunitySchedule } from "@/repositories/scheduleRepository";
 import { getApplicationsForMyCommunities } from "@/repositories/applicationRepository";
 import { getSpaceById } from "@/repositories/spaceRepository";
+import { createSpaceUseRequest, getLatestRequestByCommunity } from "@/repositories/spaceUseRequestRepository";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { CommunityFormSchema, type CommunityFormValues } from "@/types/community";
+import { PRIMARY_REGION } from "@/constants/taxonomy";
 
 const draftSchema = CommunityFormSchema.partial().extend({
   name: z.string().trim().min(1),
@@ -74,14 +78,19 @@ function localDebugSuffix(error: unknown) {
 
 export async function GET() {
   try {
-    const { supabase } = await requireApiUser("community_host");
-    const [communities, applications] = await Promise.all([
+    const { supabase, user } = await requireApiUser("community_host");
+    const [communities, applications, placeRequests] = await Promise.all([
       getCommunitiesForDashboard(supabase),
       getApplicationsForMyCommunities(supabase),
+      getLatestRequestByCommunity(createAdminSupabaseClient(), user.id),
     ]);
     const pendingCounts = new Map<string, number>();
     for (const application of applications) if (application.status === "pending") pendingCounts.set(application.communityId, (pendingCounts.get(application.communityId) ?? 0) + 1);
-    return NextResponse.json(communities.map((community) => ({ ...community, pendingApplicationCount: pendingCounts.get(community.id) ?? 0 })));
+    return NextResponse.json(communities.map((community) => ({
+      ...community,
+      pendingApplicationCount: pendingCounts.get(community.id) ?? 0,
+      placeRequest: placeRequests.get(community.id) ?? null,
+    })));
   } catch (error) {
     const authStatus = apiAuthStatus(error);
     if (authStatus) return NextResponse.json({ message: error instanceof Error ? error.message : "권한이 없어요." }, { status: authStatus });
@@ -101,6 +110,10 @@ export async function POST(request: Request) {
   try {
     db = (await requireApiUser("community_host")).supabase;
     const form = await request.formData();
+    const requestedSpaceValue = String(form.get("requestedSpaceId") ?? "").trim();
+    const requestedSpaceId = requestedSpaceValue
+      ? z.string().uuid().parse(requestedSpaceValue)
+      : null;
     const status = String(form.get("status"));
     if (status !== "draft" && status !== "published") {
       return NextResponse.json(
@@ -133,10 +146,10 @@ export async function POST(request: Request) {
     }
 
     const values = normalizeDates(CommunityFormSchema.parse({
-      category: "기타",
+      category: "취미",
       shortDescription: "작성 중인 커뮤니티입니다.",
       description: "작성 중인 커뮤니티입니다.",
-      mainRegion: "대구 전체",
+      mainRegion: PRIMARY_REGION,
       detailedRegion: "기타",
       customRegion: "작성 중",
       nextMeetingAt: new Date(Date.now() + 86_400_000).toISOString(),
@@ -148,14 +161,14 @@ export async function POST(request: Request) {
       tags: [],
       ...parsed.data,
     }));
-    if (status === "published" && values.category === "기타" && !values.customCategory?.trim()) return NextResponse.json({ message: "기타 카테고리명을 입력해 주세요.", fieldErrors: { customCategory: "기타 카테고리명을 입력해 주세요." } }, { status: 400 });
     if (status === "published" && values.detailedRegion === "기타" && !values.customRegion?.trim()) return NextResponse.json({ message: "기타 지역명을 입력해 주세요.", fieldErrors: { customRegion: "기타 지역명을 입력해 주세요." } }, { status: 400 });
     if (status === "published" && new Date(values.nextMeetingAt).getTime() < Date.now() + 60 * 60 * 1000) return NextResponse.json({ message: "모임 시작은 현재부터 1시간보다 뒤로 설정해 주세요.", fieldErrors: { nextMeetingAt: "미래 일시를 선택해 주세요." } }, { status: 400 });
 
-    const space = values.linkedSpaceId
-      ? await getSpaceById(db, values.linkedSpaceId)
+    const selectedSpaceId = requestedSpaceId ?? values.linkedSpaceId ?? null;
+    const space = selectedSpaceId
+      ? await getSpaceById(db, selectedSpaceId)
       : null;
-    if (values.linkedSpaceId && (!space || space.status !== "active")) {
+    if (selectedSpaceId && (!space || space.status !== "approved")) {
       return NextResponse.json(
         { message: "선택한 공간을 사용할 수 없어요.", fieldErrors: { linkedSpaceId: "사용 가능한 공간을 다시 선택해 주세요." } },
         { status: 400 },
@@ -169,11 +182,9 @@ export async function POST(request: Request) {
     }
 
     const image = form.get("thumbnail");
-    if (status === "published" && (!(image instanceof File) || !image.size)) {
-      return NextResponse.json(
-        { message: "대표 이미지를 등록해 주세요.", fieldErrors: { thumbnail: "대표 이미지를 등록해 주세요." } },
-        { status: 400 },
-      );
+    const activityImages = form.getAll("activityImages").filter((item): item is File => item instanceof File && item.size > 0);
+    if (activityImages.length > 8 || activityImages.some((item) => !allowedImageTypes.includes(item.type) || item.size > 5_242_880)) {
+      return NextResponse.json({ message: "활동 사진은 JPG, PNG, WebP 형식으로 최대 8장, 장당 5MB 이하만 등록할 수 있어요." }, { status: 400 });
     }
     if (
       image instanceof File &&
@@ -193,6 +204,7 @@ export async function POST(request: Request) {
       const upload = await uploadCommunityThumbnail(db, community.id, image);
       uploadedPath = upload.path;
     }
+    if (activityImages.length) await uploadCommunityActivityImages(db, community.id, activityImages);
 
     let scheduleWarning: string | undefined;
     if (status === "published") {
@@ -211,9 +223,35 @@ export async function POST(request: Request) {
       }
     }
 
+    let spaceRequestCreated = false;
+    if (status === "published" && requestedSpaceId && space) {
+      const start = new Date(values.nextMeetingAt);
+      const end = values.meetingEndAt
+        ? new Date(values.meetingEndAt)
+        : new Date(start.getTime() + values.expectedDurationHours * 60 * 60 * 1000);
+      const formatTime = (value: Date) => value.toLocaleTimeString("sv-SE", {
+        timeZone: "Asia/Seoul",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+      await createSpaceUseRequest(db, {
+        spaceId: requestedSpaceId,
+        communityId: community.id,
+        purpose: values.activityDescription || values.shortDescription,
+        requestedDate: start.toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" }),
+        requestedStartTime: formatTime(start),
+        requestedEndTime: formatTime(end),
+        expectedAttendees: values.capacity,
+        message: `${community.name} 모임의 공간 이용을 신청합니다.`,
+        idempotencyKey: crypto.randomUUID(),
+      });
+      spaceRequestCreated = true;
+    }
+
     const saved = await getCommunityByIdForDashboard(db, community.id);
     if (!saved) throw new Error("CREATED_COMMUNITY_NOT_FOUND");
-    return NextResponse.json({ ...saved, scheduleWarning }, { status: 201 });
+    return NextResponse.json({ ...saved, scheduleWarning, spaceRequestCreated }, { status: 201 });
   } catch (error) {
     const authStatus = apiAuthStatus(error);
     if (authStatus) return NextResponse.json({ message: error instanceof Error ? error.message : "권한이 없어요." }, { status: authStatus });

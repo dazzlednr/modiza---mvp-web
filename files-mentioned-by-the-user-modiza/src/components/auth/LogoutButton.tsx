@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
-export function LogoutButton({ className = "" }: { className?: string }) {
+export function LogoutButton({ className = "", onBeforeLogout }: { className?: string; onBeforeLogout?: () => void }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   return (
@@ -13,6 +13,7 @@ export function LogoutButton({ className = "" }: { className?: string }) {
       className={className}
       disabled={loading}
       onClick={async () => {
+        onBeforeLogout?.();
         setLoading(true);
         await createBrowserSupabaseClient().auth.signOut();
         router.replace("/");
