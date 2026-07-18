@@ -12,7 +12,11 @@ type InitialProfile = { nickname: string; email: string; bio: string; profileIma
 export function ProfileEditor({ initial }: { initial: InitialProfile }) {
   const [nickname, setNickname] = useState(initial.nickname);
   const [bio, setBio] = useState(initial.bio);
-  const [region, setRegion] = useState({ mainRegion: initial.mainRegion || PRIMARY_REGION, detailedRegion: initial.detailedRegion, customRegion: initial.customRegion });
+  const [region, setRegion] = useState({
+    mainRegion: !initial.mainRegion || initial.mainRegion === "대구 전체" ? PRIMARY_REGION : initial.mainRegion,
+    detailedRegion: initial.detailedRegion,
+    customRegion: initial.customRegion,
+  });
   const [interests, setInterests] = useState(initial.interestCategories);
   const [personalInterests, setPersonalInterests] = useState(initial.interestedCategories ?? []);
   const [personalRegions, setPersonalRegions] = useState(initial.interestedRegions ?? []);
@@ -82,7 +86,11 @@ export function ProfileEditor({ initial }: { initial: InitialProfile }) {
         <label>닉네임<input className="field" value={nickname} maxLength={40} required onChange={(event) => setNickname(event.target.value)} /></label>
         <label>이메일<input className="field" value={initial.email} disabled /></label>
         <label>소개<textarea className="field" rows={4} maxLength={300} placeholder="나를 소개해 주세요." value={bio} onChange={(event) => setBio(event.target.value)} /></label>
-        <div className="profile-wide"><RegionFields {...region} onChange={setRegion} /></div>
+        <fieldset className="profile-wide profile-region-fields">
+          <legend>거주 지역</legend>
+          <p className="muted">대표 지역과 세부 지역을 거주 지역으로 저장합니다.</p>
+          <RegionFields {...region} onChange={setRegion} />
+        </fieldset>
         <fieldset className="profile-wide"><legend>관심 카테고리 · 1개 이상</legend><div className="category-row">{communityCategories.map((category) => <button type="button" key={category} className={`category ${interests.includes(category) ? "active" : ""}`} onClick={() => setInterests((current) => current.includes(category) ? current.filter((item) => item !== category) : [...current, category])}>{category}</button>)}</div></fieldset>
         <fieldset className="profile-wide"><legend>{"\uB9DE\uCDA4 \uCD94\uCC9C \uAD00\uC2EC \uD65C\uB3D9 (\uCD5C\uB300 5\uAC1C)"}</legend><div className="category-row">{personalizationCategories.map((item)=><button type="button" key={item} className={`category ${personalInterests.includes(item)?"active":""}`} onClick={()=>setPersonalInterests((current)=>current.includes(item)?current.filter((value)=>value!==item):current.length<5?[...current,item]:current)}>{item}</button>)}</div></fieldset>
         <fieldset className="profile-wide"><legend>{"\uB9DE\uCDA4 \uCD94\uCC9C \uAD00\uC2EC \uC9C0\uC5ED (\uCD5C\uB300 3\uAC1C)"}</legend><div className="category-row">{personalizationRegions.map((item)=><button type="button" key={item} className={`category ${personalRegions.includes(item)?"active":""}`} onClick={()=>setPersonalRegions((current)=>current.includes(item)?current.filter((value)=>value!==item):current.length<3?[...current,item]:current)}>{item}</button>)}</div></fieldset>

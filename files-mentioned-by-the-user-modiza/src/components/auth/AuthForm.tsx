@@ -140,7 +140,7 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
       {mode === "signup" && <>
         <fieldset><legend>회원 유형</legend><div className="signup-role-grid"><button type="button" className={`category ${memberType === "member" ? "active" : ""}`} onClick={() => setMemberType("member")}>일반 참여자</button><button type="button" className={`category ${memberType === "community_host" ? "active" : ""}`} onClick={() => setMemberType("community_host")}>커뮤니티 운영자</button></div></fieldset>
         <fieldset><legend>거주 지역</legend><RegionFields {...region} onChange={setRegion} /></fieldset>
-        <fieldset><legend>관심 카테고리 · 1개 이상</legend><div className="category-row">{communityCategories.map((category) => <button type="button" key={category} className={`category ${interests.includes(category) ? "active" : ""}`} onClick={() => setInterests((current) => current.includes(category) ? current.filter((item) => item !== category) : [...current, category])}>{category}</button>)}</div></fieldset>
+        <fieldset><legend>관심 카테고리 · 1개 이상</legend><div className="category-row signup-category-row">{communityCategories.map((category) => <button type="button" key={category} className={`category ${interests.includes(category) ? "active" : ""}`} onClick={() => setInterests((current) => current.includes(category) ? current.filter((item) => item !== category) : [...current, category])}>{category}</button>)}</div></fieldset>
       </>}
       {mode !== "update-password" && (
         <label>

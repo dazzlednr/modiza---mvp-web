@@ -27,7 +27,8 @@ export async function PUT(request: Request) {
     const form = await request.formData();
     const nickname = String(form.get("nickname") ?? "").trim();
     const bio = String(form.get("bio") ?? "").trim();
-    const mainRegion = String(form.get("mainRegion") ?? PRIMARY_REGION);
+    const submittedMainRegion = String(form.get("mainRegion") ?? PRIMARY_REGION);
+    const mainRegion = submittedMainRegion === "대구 전체" ? PRIMARY_REGION : submittedMainRegion;
     const detailedRegion = String(form.get("detailedRegion") ?? "");
     const customRegion = detailedRegion === "\uAE30\uD0C0" ? String(form.get("customRegion") ?? "").trim() : "";
     const interestCategories = parseArray(form, "interestCategories");

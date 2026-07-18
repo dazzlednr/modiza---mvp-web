@@ -10,7 +10,7 @@ function map(row: Record<string, unknown>): Profile {
     nickname: String(row.nickname),
     profileImage: row.profile_image ? String(row.profile_image) : null,
     bio: row.bio ? String(row.bio) : null,
-    mainRegion: row.main_region ? String(row.main_region) : "대구 전체",
+    mainRegion: row.main_region && String(row.main_region) !== "대구 전체" ? String(row.main_region) : "대구",
     detailedRegion: row.detailed_region ? String(row.detailed_region) : null,
     customRegion: row.custom_region ? String(row.custom_region) : null,
     interestCategories: normalizeCommunityCategories(Array.isArray(row.interest_categories) ? row.interest_categories.map(String) : []),
