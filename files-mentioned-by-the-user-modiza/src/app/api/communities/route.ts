@@ -140,7 +140,7 @@ export async function POST(request: Request) {
           .map((issue) => [String(issue.path[0]), issue.message]),
       );
       return NextResponse.json(
-        { message: "입력하지 않은 항목을 확인해 주세요.", fieldErrors },
+        { message: parsed.error.issues[0]?.message || "입력하지 않은 항목을 확인해 주세요.", fieldErrors },
         { status: 400 },
       );
     }
@@ -159,6 +159,7 @@ export async function POST(request: Request) {
       recruitmentStatus: "upcoming",
       applicationQuestions: [],
       tags: [],
+      activityDescription: "작성 중",
       ...parsed.data,
     }));
     if (status === "published" && values.detailedRegion === "기타" && !values.customRegion?.trim()) return NextResponse.json({ message: "기타 지역명을 입력해 주세요.", fieldErrors: { customRegion: "기타 지역명을 입력해 주세요." } }, { status: 400 });

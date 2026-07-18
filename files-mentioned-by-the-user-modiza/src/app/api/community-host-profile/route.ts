@@ -14,7 +14,11 @@ async function save(request:Request,editing:boolean){
     if(profile?.communityHostRevokedAt)return NextResponse.json({message:"관리자에 의해 커뮤니티 운영 권한이 회수된 계정입니다."},{status:403});
     const form=await request.formData();
     const parsed=schema.safeParse({headline:form.get("headline"),introduction:form.get("introduction"),activityRegion:form.get("activityRegion")??"",interestCategories:parseArray(form,"interestCategories"),operatingStyles:parseArray(form,"operatingStyles")});
-    if(!parsed.success)return NextResponse.json({message:"한 줄 소개와 운영자 소개를 확인해 주세요."},{status:400});
+    if(!parsed.success){
+      const field=parsed.error.issues[0]?.path[0];
+      const message=field==="headline"?"한 줄 소개는 2자 이상 입력해 주세요.":field==="introduction"?"운영자 소개는 10자 이상 입력해 주세요.":"입력한 운영자 정보를 확인해 주세요.";
+      return NextResponse.json({message},{status:400});
+    }
     const current=await getCommunityHostProfile(supabase,user.id);
     return NextResponse.json(editing&&current?await updateCommunityHostProfile(supabase,user.id,parsed.data):await startCommunityHost(supabase,parsed.data));
   }catch(error){console.error("[MODIZA][community-host-profile] save failed",error);return NextResponse.json({message:"운영자 프로필을 저장하지 못했어요."},{status:apiAuthStatus(error)??500});}

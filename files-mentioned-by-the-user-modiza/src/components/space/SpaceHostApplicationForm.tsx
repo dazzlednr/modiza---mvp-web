@@ -15,15 +15,36 @@ export function SpaceHostApplicationForm() {
   const [message, setMessage] = useState("");
   const [fileNames, setFileNames] = useState<string[]>([]);
   const [contactMethod, setContactMethod] = useState<NegotiationContactMethod>("store_phone");
+  const [contactValue, setContactValue] = useState("");
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    const fail = (text: string, fieldName?: string) => {
+      setMessage(text);
+      if (fieldName) requestAnimationFrame(() => {
+        const field = formElement.elements.namedItem(fieldName);
+        if (field instanceof HTMLElement) {
+          field.focus();
+          field.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      });
+    };
     const files = form.getAll("evidence").filter((item): item is File => item instanceof File && item.size > 0);
-    if (!files.length) return setMessage("공간 운영 권한을 확인할 수 있는 증빙자료를 1개 이상 첨부해 주세요.");
-    if (files.length > MAX_FILES) return setMessage("증빙자료는 최대 3개까지 첨부할 수 있어요.");
-    if (files.some((file) => !allowedTypes.has(file.type))) return setMessage("PDF, JPG, JPEG, PNG 형식의 파일만 첨부할 수 있어요.");
-    if (files.some((file) => file.size > MAX_FILE_SIZE)) return setMessage("각 파일은 10MB 이하로 첨부해 주세요.");
+    if (!String(form.get("applicantName") ?? "").trim()) return fail("신청자 이름을 입력해 주세요.", "applicantName");
+    if (!String(form.get("spaceName") ?? "").trim()) return fail("운영 중인 공간명을 입력해 주세요.", "spaceName");
+    if (!String(form.get("spaceType") ?? "").trim()) return fail("공간 유형을 입력해 주세요.", "spaceType");
+    if (!String(form.get("spaceAddress") ?? "").trim()) return fail("공간 주소를 입력해 주세요.", "spaceAddress");
+    if (!String(form.get("relationship") ?? "").trim()) return fail("공간과 신청자의 관계를 선택해 주세요.", "relationship");
+    if (!contactValue.trim()) return fail("협의에 사용할 연락 정보를 입력해 주세요.", "negotiationContactValue");
+    if (contactMethod === "store_phone" && /^(\+?82[-\s]?)?0?1[016789][-\s]?/i.test(contactValue.replace(/[()]/g, ""))) {
+      return fail("개인 휴대전화번호가 아닌 매장 대표 전화번호를 입력해 주세요.", "negotiationContactValue");
+    }
+    if (!files.length) return fail("공간 운영 권한을 확인할 수 있는 증빙자료를 1개 이상 첨부해 주세요.", "evidence");
+    if (files.length > MAX_FILES) return fail("증빙자료는 최대 3개까지 첨부할 수 있어요.", "evidence");
+    if (files.some((file) => !allowedTypes.has(file.type))) return fail("PDF, JPG, JPEG, PNG 형식의 파일만 첨부할 수 있어요.", "evidence");
+    if (files.some((file) => file.size > MAX_FILE_SIZE)) return fail("각 파일은 10MB 이하로 첨부해 주세요.", "evidence");
 
     setLoading(true);
     setMessage("");
@@ -37,7 +58,7 @@ export function SpaceHostApplicationForm() {
     router.refresh();
   }
 
-  return <form className="panel form" onSubmit={submit}>
+  return <form className="panel form" noValidate onSubmit={submit}>
     <div className="grid form-grid">
       <label>신청자 이름<input className="field" name="applicantName" required maxLength={60} /></label>
       <label>공간명<input className="field" name="spaceName" required maxLength={100} /></label>
@@ -55,8 +76,11 @@ export function SpaceHostApplicationForm() {
         </select></label>
         <label>{contactMethod === "store_phone" ? "매장 전화번호" : contactMethod === "kakao_open_chat" ? "오픈채팅 링크" : contactMethod === "kakao_channel" ? "카카오톡 채널 링크" : contactMethod === "instagram" ? "인스타그램 계정 또는 링크" : "연락 방법 정보"}
           <input className="field" name="negotiationContactValue" required maxLength={300}
+            value={contactValue}
+            onChange={(event) => setContactValue(event.target.value)}
             inputMode={contactMethod === "store_phone" ? "tel" : "url"}
             placeholder={contactMethod === "store_phone" ? "053-123-4567" : contactMethod === "kakao_open_chat" ? "https://open.kakao.com/..." : contactMethod === "instagram" ? "@modiza_space" : "연락 가능한 업무용 정보를 입력해주세요."} />
+          {contactMethod === "store_phone" && <span className="field-help contact-mobile-guidance">개인 휴대전화번호가 아닌 매장 대표 전화번호를 입력해 주세요. 예: 053-123-4567</span>}
         </label>
       </div>
     </fieldset>

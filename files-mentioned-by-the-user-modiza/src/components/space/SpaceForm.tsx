@@ -363,12 +363,15 @@ export function SpaceForm({
   }
 
   function validateStep(target: number, intent: "draft" | "pending" = "pending") {
-    if (!values.name.trim()) return "공간명을 입력해 주세요.";
+    if (values.name.trim().length < 2) return "공간명은 2자 이상 입력해 주세요.";
     if (intent === "draft") return "";
     const unchangedLegacyAddress = Boolean(space && !space.roadAddress && values.address.trim() === space.address.trim());
     const selectedRoadAddress = Boolean(values.roadAddress?.trim() && values.address.trim() === values.roadAddress.trim());
     if (target >= 1 && !selectedRoadAddress && !unchangedLegacyAddress) return "주소 검색을 통해 도로명 주소를 선택해주세요.";
-    if (target >= 1 && (!values.spaceType || !values.shortDescription?.trim() || !values.description?.trim() || !values.detailedRegion || !values.address.trim())) return "1단계 기본 정보를 모두 입력해 주세요.";
+    if (target >= 1 && !values.spaceType) return "공간 유형을 선택해 주세요.";
+    if (target >= 1 && (values.shortDescription?.trim().length ?? 0) < 5) return "한 줄 소개는 5자 이상 입력해 주세요.";
+    if (target >= 1 && (values.description?.trim().length ?? 0) < 10) return "상세 소개는 10자 이상 입력해 주세요.";
+    if (target >= 1 && (!values.detailedRegion || !values.address.trim())) return "주소와 지역 정보를 확인해 주세요.";
     if (target >= 1 && values.detailedRegion === "기타" && !values.customRegion?.trim()) return "기타 지역명을 입력해 주세요.";
     if (target >= 2) {
       if (!openHours.length) return "운영 요일을 한 개 이상 선택해 주세요.";
@@ -387,6 +390,7 @@ export function SpaceForm({
         if (values.communityRecurrenceType === "specific_dates" && !values.communitySpecificDates.length) return "커뮤니티 이용 가능한 날짜를 한 개 이상 추가해 주세요.";
       }
       if (!values.preferredContactMethod || !values.privateContact?.trim()) return "협의 연락 방법과 연락 정보를 입력해 주세요.";
+      if (values.preferredContactMethod === "store_phone" && /^(\+?82[-\s]?)?0?1[016789][-\s]?/i.test(values.privateContact.replace(/[()]/g, ""))) return "개인 휴대전화번호가 아닌 매장 대표 전화번호를 입력해 주세요.";
     }
     if (target >= 3) {
       if (values.pricePerHour < 0 || values.minimumHours < 1 || values.minCapacity < 1 || values.maxCapacity < 1) return "가격과 이용 인원을 확인해 주세요.";
@@ -395,7 +399,7 @@ export function SpaceForm({
     }
     if (target >= 4) {
       if (!space?.images.length && !effectiveFiles.length) return "대표 이미지를 등록해 주세요.";
-      if (!values.usageRules?.trim()) return "커뮤니티 이용 규칙을 입력해 주세요.";
+      if ((values.usageRules?.trim().length ?? 0) < 5) return "이용 규칙은 5자 이상 입력해 주세요.";
       if (!verification.contactName.trim() || !verification.contactPhone.trim() || !verification.relationshipType) return "담당자 연락처와 공간과의 관계를 입력해 주세요.";
       if (verification.relationshipType === "other" && !verification.relationshipDetail.trim()) return "공간과의 관계를 직접 입력해 주세요.";
       if (evidenceFiles.length < 1 || evidenceFiles.length > 3) return "공간 운영 권한 증빙자료를 1개 이상 3개 이하로 첨부해 주세요.";
@@ -476,7 +480,11 @@ export function SpaceForm({
     }
   }
 
-  const input = (label: string, key: keyof SpaceFormValues, type = "text") => <label>{label}<input className="field" type={type} value={String(values[key] ?? "")} onChange={(event) => update(key, (type === "number" ? Number(event.target.value) : event.target.value) as never)} /></label>;
+  const input = (label: string, key: keyof SpaceFormValues, type = "text") => {
+    const minimum = key === "name" ? 2 : key === "shortDescription" ? 5 : undefined;
+    const displayedValue = type === "number" && Number(values[key]) === 0 ? "" : String(values[key] ?? "");
+    return <label>{label}<input className="field" type={type} inputMode={type === "number" ? "decimal" : undefined} required={Boolean(minimum)} minLength={minimum} value={displayedValue} placeholder={type === "number" ? "0" : undefined} onChange={(event) => update(key, (type === "number" ? Number(event.target.value) : event.target.value) as never)} />{minimum && <span className="field-help">{minimum}자 이상 입력해 주세요.</span>}</label>;
+  };
   const chips = (key: "facilities" | "moods" | "suitableActivities", title: string, customLabel: string, tip: string) => {
     const preset = options[key] as readonly string[];
     const customValues = values[key].filter((item) => !preset.includes(item));
@@ -493,7 +501,7 @@ export function SpaceForm({
     <ol className="wizard-steps space-wizard-steps">{steps.map((label, index) => <li key={label} className={step === index + 1 ? "active" : step > index + 1 ? "done" : ""}><span>{step > index + 1 ? <Check size={15} /> : index + 1}</span><b>{label}</b></li>)}</ol>
 
     {step === 1 && <>
-      <section className="panel wizard-panel"><p className="eyebrow">Step 1</p><h2>기본 정보</h2><div className="grid form-grid">{input("공간명", "name")}<label>공간 유형<select className="field" value={values.spaceType} onChange={(event) => update("spaceType", event.target.value)}><option value="">선택</option>{["카페", "스튜디오", "공방", "회의실", "연습실", "복합문화공간", "독립 공간", "기타"].map((item) => <option key={item}>{item}</option>)}</select></label></div>{input("한 줄 소개", "shortDescription")}<label>상세 소개<textarea className="field" rows={5} value={values.description ?? ""} onChange={(event) => update("description", event.target.value)} /></label></section>
+      <section className="panel wizard-panel"><p className="eyebrow">Step 1</p><h2>기본 정보</h2><div className="grid form-grid">{input("공간명", "name")}<label>공간 유형<select className="field" value={values.spaceType} onChange={(event) => update("spaceType", event.target.value)}><option value="">선택</option>{["카페", "스튜디오", "공방", "회의실", "연습실", "복합문화공간", "독립 공간", "기타"].map((item) => <option key={item}>{item}</option>)}</select></label></div>{input("한 줄 소개", "shortDescription")}<label>상세 소개<textarea className="field" required minLength={10} rows={5} value={values.description ?? ""} onChange={(event) => update("description", event.target.value)} /><span className="field-help">10자 이상 입력해 주세요.</span></label></section>
       <section className="panel wizard-panel"><h2>위치 및 지역</h2>
         {!space && suggested?.address && !values.roadAddress && <p className="prefilled-address-note">운영자 신청에서 입력한 주소를 참고용으로 불러왔어요. 공개할 주소는 아래 주소 검색을 통해 다시 선택해주세요.</p>}
         {space && !space.roadAddress && <p className="prefilled-address-note">기존 자유 입력 주소는 그대로 유지되고 있습니다. 주소를 변경하려면 주소 검색을 이용해주세요.</p>}
@@ -551,7 +559,7 @@ export function SpaceForm({
               onChange={(event) => update("privateContact", event.target.value)}
               inputMode={values.preferredContactMethod === "store_phone" ? "tel" : "url"}
               placeholder={values.preferredContactMethod ? CONTACT_PLACEHOLDERS[values.preferredContactMethod] : "먼저 협의 연락 방법을 선택해주세요."}
-            /></label>
+            />{values.preferredContactMethod === "store_phone" && <span className="field-help contact-mobile-guidance">개인 휴대전화번호가 아닌 매장 대표 전화번호를 입력해 주세요. 예: 053-123-4567</span>}</label>
           </div>
           <p className="field-help">등록한 연락 수단은 공간 상세의 이용 정보에 표시됩니다. 이용 문의가 들어오면 필요한 일정과 조건을 이 방법으로 협의할 수 있어요.</p>
         </fieldset>
@@ -565,7 +573,7 @@ export function SpaceForm({
 
     {step === 4 && <>
       {!hidePhotoSection && <section className="panel wizard-panel"><p className="eyebrow">Step 4</p><h2>사진 업로드</h2><label className="upload" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); add(Array.from(event.dataTransfer.files)); }}><ImagePlus style={{ margin: "auto" }} /><b>사진을 선택하거나 끌어다 놓으세요</b><span>최대 10장 · JPG, PNG, WebP · 장당 10MB 이하</span><input hidden type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={(event) => { add(Array.from(event.target.files ?? [])); event.currentTarget.value = ""; }} /></label><div className="grid cards">{space?.images.map((image) => <div className="card" key={image.id}><div className="cover"><Image src={image.publicUrl} fill alt="공간 이미지" />{image.isThumbnail && <span className="tag">대표</span>}</div></div>)}{files.map((file, index) => <div className="card" key={`${file.name}-${file.size}-${file.lastModified}`}><div className="cover"><Image src={URL.createObjectURL(file)} fill unoptimized alt="미리보기" />{index === 0 && <span className="tag">대표</span>}</div><div className="photo-inline-actions"><button type="button" disabled={index === 0} onClick={() => moveFile(index, -1)}><ArrowLeft />앞으로</button><button type="button" disabled={index === files.length - 1} onClick={() => moveFile(index, 1)}><ArrowRight />뒤로</button>{index > 0 && <button type="button" onClick={() => makeThumbnail(index)}><Star />대표</button>}<button type="button" onClick={() => setFiles(files.filter((_, itemIndex) => itemIndex !== index))}><Trash2 />삭제</button></div></div>)}</div></section>}
-      <section className="panel wizard-panel"><h2>이용 규칙</h2><p className="muted">커뮤니티 이용 때 지켜야 할 규칙이나 안내사항을 작성해 주세요. 운영자가 공간을 선택하거나 이용을 요청하기 전에 확인할 수 있습니다.</p><label>이용 규칙<textarea className="field" rows={6} value={values.usageRules ?? ""} onChange={(event) => update("usageRules", event.target.value)} placeholder={"예: 일반 영업과 함께 이용하는 공간입니다.\n공간 전체를 단독으로 사용할 수 없습니다.\n1인 1음료 주문이 필요합니다.\n이용 후 자리를 정리해 주세요."} /></label><details className="field-tip"><summary><Lightbulb size={15} />예시 보기</summary><ul><li>외부 음식물 반입 여부</li><li>소음이 큰 활동이나 악기 연주 제한</li><li>예약 시간 전 입장 가능 여부</li><li>시설과 장비 사용 시 직원 안내 필요 여부</li></ul></details></section>
+      <section className="panel wizard-panel"><h2>이용 규칙</h2><p className="muted">커뮤니티 이용 때 지켜야 할 규칙이나 안내사항을 작성해 주세요. 운영자가 공간을 선택하거나 이용을 요청하기 전에 확인할 수 있습니다.</p><label>이용 규칙<textarea className="field" required minLength={5} rows={6} value={values.usageRules ?? ""} onChange={(event) => update("usageRules", event.target.value)} placeholder={"예: 일반 영업과 함께 이용하는 공간입니다.\n공간 전체를 단독으로 사용할 수 없습니다.\n1인 1음료 주문이 필요합니다.\n이용 후 자리를 정리해 주세요."} /><span className="field-help">5자 이상 입력해 주세요.</span></label><details className="field-tip"><summary><Lightbulb size={15} />예시 보기</summary><ul><li>외부 음식물 반입 여부</li><li>소음이 큰 활동이나 악기 연주 제한</li><li>예약 시간 전 입장 가능 여부</li><li>시설과 장비 사용 시 직원 안내 필요 여부</li></ul></details></section>
       {(!space || ["draft", "revision_requested", "rejected"].includes(space.status)) && <section className="panel verification-submit-panel"><div><p className="eyebrow">Space verification</p><h2>공간별 인증 신청</h2><p className="muted">공간 운영자 자격과 별개로 등록하는 각 공간의 운영 권한을 확인합니다. 승인 전에는 이용자에게 공개되지 않아요.</p></div><div className="grid form-grid"><label>담당자 이름<input className="field" value={verification.contactName} onChange={(event) => setVerification({ ...verification, contactName: event.target.value })} /></label><label>담당자 연락처<input className="field" value={verification.contactPhone} onChange={(event) => setVerification({ ...verification, contactPhone: event.target.value })} placeholder="010-0000-0000" /></label><label>공간과의 관계<select className="field" value={verification.relationshipType} onChange={(event) => setVerification({ ...verification, relationshipType: event.target.value as SpaceRelationshipType | "", relationshipDetail: event.target.value === "other" ? verification.relationshipDetail : "" })}><option value="">선택</option><option value="owner">직접 운영하는 소유자</option><option value="manager">공간 관리자 또는 공동대표</option><option value="employee">직원 또는 매니저</option><option value="tenant">임차인 또는 위임받은 운영자</option><option value="other">기타</option></select></label>{verification.relationshipType === "other" && <label>관계 직접 입력<input className="field" value={verification.relationshipDetail} onChange={(event) => setVerification({ ...verification, relationshipDetail: event.target.value })} /></label>}</div><label>추가 전달 사항 <span className="muted">(선택)</span><textarea className="field" rows={3} value={verification.applicantNote} onChange={(event) => setVerification({ ...verification, applicantNote: event.target.value })} /></label><label className="upload"><b>공간 운영 권한 증빙자료</b><span>PDF, JPG, JPEG, PNG · 파일당 10MB 이하 · 1~3개</span><input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" onChange={(event) => { const next = Array.from(event.target.files ?? []); if (next.length > 3) return setError("증빙자료는 최대 3개까지 첨부할 수 있어요."); if (next.some((file) => file.size > 10_485_760)) return setError("증빙자료는 파일당 최대 10MB까지 첨부할 수 있어요."); setEvidenceFiles(next); setError(""); event.currentTarget.value = ""; }} /></label>{evidenceFiles.length > 0 && <div className="evidence-file-list">{evidenceFiles.map((file, index) => <button type="button" className="category active custom-tag" key={`${file.name}-${file.size}`} onClick={() => setEvidenceFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))}>{file.name} · {(file.size / 1024 / 1024).toFixed(1)}MB <Trash2 size={14} /></button>)}</div>}<small className="muted">사업자등록증, 임대차계약서, 재직증명서, 명함 또는 공간 관리자 화면처럼 운영 권한을 확인할 수 있는 자료를 첨부해 주세요.</small></section>}
       <section className="panel final-confirmation"><label className="checkbox-label"><input type="checkbox" checked={finalConfirmed} onChange={(event) => { setFinalConfirmed(event.target.checked); setError(""); }} /><span><strong>운영 시간, 커뮤니티 이용 가능 시간, 이용 규칙을 모두 확인했습니다.</strong><small>AI가 제안한 항목도 실제 공간과 일치하는지 운영자가 최종 확인해야 합니다.</small></span></label></section>
     </>}

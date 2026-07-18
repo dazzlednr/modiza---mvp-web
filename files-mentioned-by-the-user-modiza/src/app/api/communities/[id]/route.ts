@@ -53,7 +53,7 @@ export async function PUT(
     if (!parsed.success) {
       return NextResponse.json(
         {
-          message: "입력하지 않은 항목을 확인해 주세요.",
+          message: parsed.error.issues[0]?.message || "입력하지 않은 항목을 확인해 주세요.",
           fieldErrors: Object.fromEntries(parsed.error.issues.filter((issue) => issue.path[0]).map((issue) => [String(issue.path[0]), issue.message])),
         },
         { status: 400 },

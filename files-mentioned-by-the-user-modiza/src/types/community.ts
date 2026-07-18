@@ -10,15 +10,15 @@ export type CommunityActivityImage = { id:string; communityId:string; storagePat
 export type CommunityHostProfile = { userId:string; nickname:string; profileImage:string|null; headline:string; introduction:string; activityRegion:string|null; interestCategories:string[]; operatingStyles:string[]; startedAt:string; createdAt:string; updatedAt:string };
 
 export const CommunityFormSchema = z.object({
-  name:z.string().trim().min(1).max(80), category:z.enum(communityCategories), customCategory:z.string().trim().max(60).nullable().optional(),
-  shortDescription:z.string().trim().min(1).max(160), description:z.string().trim().min(1),
+  name:z.string().trim().min(2,"커뮤니티명은 2자 이상 입력해 주세요.").max(80), category:z.enum(communityCategories), customCategory:z.string().trim().max(60).nullable().optional(),
+  shortDescription:z.string().trim().min(5,"한 줄 소개는 5자 이상 입력해 주세요.").max(160), description:z.string().trim().min(10,"커뮤니티 소개는 10자 이상 입력해 주세요."),
   mainRegion:z.string().trim().min(1).default(PRIMARY_REGION), detailedRegion:z.string().trim().min(1), customRegion:z.string().trim().max(80).nullable().optional(),
   nextMeetingAt:z.string().min(1), meetingEndAt:z.string().nullable().optional(),
   capacity:z.number().int().min(1), participationFee:z.number().int().min(0),
   participationType:z.enum(["offline","online","hybrid"]), recruitmentStatus:z.enum(["recruiting","closed","upcoming"]),
   recruitmentStartAt:z.string().nullable().optional(), recruitmentEndAt:z.string().nullable().optional(),
-  targetAudience:z.string().optional(), rules:z.string().optional(), preparationItems:z.string().optional(),
-  activityDescription:z.string().default(""), moodTags:z.array(z.string()).default([]), requiredFacilities:z.array(z.string()).default([]), indoorOutdoor:z.enum(["indoor","outdoor","both"]).default("indoor"), foodDrinkNeeded:z.boolean().default(false), expectedDurationHours:z.number().min(0.5).max(24).default(2), budgetMin:z.number().int().min(0).default(0), budgetMax:z.number().int().min(0).default(0), travelRange:z.string().default(""),
+  targetAudience:z.string().trim().min(2,"참여 대상은 2자 이상 입력해 주세요.").optional(), rules:z.string().optional(), preparationItems:z.string().optional(),
+  activityDescription:z.string().trim().min(5,"진행할 활동은 5자 이상 입력해 주세요.").default(""), moodTags:z.array(z.string()).default([]), requiredFacilities:z.array(z.string()).default([]), indoorOutdoor:z.enum(["indoor","outdoor","both"]).default("indoor"), foodDrinkNeeded:z.boolean().default(false), expectedDurationHours:z.number().min(0.5).max(24).default(2), budgetMin:z.number().int().min(0).default(0), budgetMax:z.number().int().min(0).default(0), travelRange:z.string().default(""),
   applicationQuestions:z.array(z.string().trim().min(1)).default([]), tags:z.preprocess(value=>typeof value==="string"?value.split(",").map(item=>item.trim()).filter(Boolean):value,z.array(z.string())).default([]),
   linkedSpaceId:z.string().uuid().nullable().optional(),
   meetingFrequencyType:z.enum(["one_time","weekly","biweekly","monthly","custom"]).default("one_time"), meetingFrequencyLabel:z.string().trim().max(80).nullable().optional(),
