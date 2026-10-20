@@ -29,7 +29,7 @@ export function InterestOnboarding({ initialCategories, initialRegions }: { init
     <p className="eyebrow">Personalize MODIZA · {step}/2</p>
     {step === 1 ? <>
       <h1>{"\uAD00\uC2EC \uC788\uB294 \uD65C\uB3D9\uC744 \uC120\uD0DD\uD574\uC8FC\uC138\uC694."}</h1>
-      <p className="muted">{"\uAD00\uC2EC\uC0AC\uC5D0 \uB9DE\uB294 \uCEE4\uBBA4\uB2C8\uD2F0\uB97C \uCD94\uCC9C\uD574\uB4DC\uB9BD\uB2C8\uB2E4. 1~5\uAC1C\uB97C \uC120\uD0DD\uD574 \uC8FC\uC138\uC694."}</p>
+      <p className="muted">{"\uAD00\uC2EC\uC0AC\uC5D0 \uB9DE\uB294 모임\uB97C \uCD94\uCC9C\uD574\uB4DC\uB9BD\uB2C8\uB2E4. 1~5\uAC1C\uB97C \uC120\uD0DD\uD574 \uC8FC\uC138\uC694."}</p>
       <div className="interest-grid">{personalizationCategories.map((item) => <button type="button" className={`category ${categories.includes(item) ? "active" : ""}`} key={item} onClick={() => toggle(item, categories, 5, setCategories)}>{item}</button>)}</div>
       <div className="onboarding-actions"><button type="button" className="btn btn-ghost" onClick={() => setStep(2)}>{"\uAC74\uB108\uB6F0\uAE30"}</button><button type="button" className="btn btn-primary" disabled={!categories.length} onClick={() => setStep(2)}>{"\uB2E4\uC74C"}</button></div>
     </> : <>

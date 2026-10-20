@@ -6,7 +6,7 @@ const menus=[
   ["/admin/host-applications","공간 운영자 자격"],
   ["/admin/space-verifications","공간 인증 관리"],
   ["/admin/spaces","공간 공개 관리"],
-  ["/admin/communities","커뮤니티 관리"],
+  ["/admin/communities","모임 관리"],
   ["/admin/members","회원 관리"],
   ["/admin/reports","신고 관리"],
   ["/admin/audit","관리자 활동 기록"],

@@ -33,11 +33,11 @@ export async function GET(
     );
     return community
       ? NextResponse.json(community)
-      : NextResponse.json({ message: "커뮤니티를 찾을 수 없어요." }, { status: 404 });
+      : NextResponse.json({ message: "모임을 찾을 수 없어요." }, { status: 404 });
   } catch (error) {
     const authStatus = apiAuthStatus(error);
     if (authStatus) return NextResponse.json({ message: error instanceof Error ? error.message : "권한이 없어요." }, { status: authStatus });
-    return NextResponse.json({ message: "커뮤니티를 불러오지 못했어요." }, { status: 500 });
+    return NextResponse.json({ message: "모임을 불러오지 못했어요." }, { status: 500 });
   }
 }
 
@@ -70,7 +70,7 @@ export async function PUT(
     if (values.detailedRegion === "기타" && !values.customRegion?.trim()) return NextResponse.json({ message: "기타 지역명을 입력해 주세요." }, { status: 400 });
     if (new Date(values.nextMeetingAt).getTime() < Date.now() + 60 * 60 * 1000) return NextResponse.json({ message: "모임 시작은 현재부터 1시간보다 뒤로 설정해 주세요." }, { status: 400 });
     const current = await getCommunityByIdForDashboard(db, id);
-    if (!current) return NextResponse.json({ message: "커뮤니티를 찾을 수 없어요." }, { status: 404 });
+    if (!current) return NextResponse.json({ message: "모임을 찾을 수 없어요." }, { status: 404 });
 
     const space = values.linkedSpaceId
       ? await getSpaceById(db, values.linkedSpaceId)
@@ -112,7 +112,7 @@ export async function PUT(
     const authStatus = apiAuthStatus(error);
     if (authStatus) return NextResponse.json({ message: error instanceof Error ? error.message : "권한이 없어요." }, { status: authStatus });
     console.error("[MODIZA][community] update failed", error);
-    return NextResponse.json({ message: "커뮤니티를 저장하지 못했어요." }, { status: 500 });
+    return NextResponse.json({ message: "모임을 저장하지 못했어요." }, { status: 500 });
   }
 }
 
@@ -144,7 +144,7 @@ export async function PATCH(
             });
           } catch (scheduleError) {
             console.error("[MODIZA][community] publish schedule failed", scheduleError);
-            scheduleWarning = "커뮤니티는 공개됐지만 첫 일정은 저장하지 못했어요. 대시보드에서 다시 추가해 주세요.";
+            scheduleWarning = "모임는 공개됐지만 첫 일정은 저장하지 못했어요. 대시보드에서 다시 추가해 주세요.";
           }
         }
       }
@@ -179,6 +179,6 @@ export async function DELETE(
   } catch (error) {
     const authStatus = apiAuthStatus(error);
     if (authStatus) return NextResponse.json({ message: error instanceof Error ? error.message : "권한이 없어요." }, { status: authStatus });
-    return NextResponse.json({ message: "커뮤니티를 삭제하지 못했어요." }, { status: 500 });
+    return NextResponse.json({ message: "모임을 삭제하지 못했어요." }, { status: 500 });
   }
 }

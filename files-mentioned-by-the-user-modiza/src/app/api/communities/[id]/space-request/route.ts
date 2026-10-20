@@ -37,13 +37,13 @@ export async function POST(
       getSpaceById(supabase, parsed.data.spaceId),
     ]);
     if (!community) {
-      return NextResponse.json({ message: "운영 중인 커뮤니티를 찾을 수 없어요." }, { status: 404 });
+      return NextResponse.json({ message: "운영 중인 모임을 찾을 수 없어요." }, { status: 404 });
     }
     if (!space || space.status !== "approved") {
       return NextResponse.json({ message: "현재 신청할 수 없는 공간이에요." }, { status: 400 });
     }
     if (!community.nextMeetingAt) {
-      return NextResponse.json({ message: "커뮤니티의 다음 모임 일정을 먼저 등록해주세요." }, { status: 400 });
+      return NextResponse.json({ message: "모임의 다음 모임 일정을 먼저 등록해주세요." }, { status: 400 });
     }
     if (community.capacity > space.maxCapacity) {
       return NextResponse.json({ message: `이 공간은 최대 ${space.maxCapacity}명까지 이용할 수 있어요.` }, { status: 400 });

@@ -59,7 +59,7 @@ export default function Page() {
 
   async function addGroup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!communityId) return setError("먼저 커뮤니티를 선택해 주세요.");
+    if (!communityId) return setError("먼저 모임을 선택해 주세요.");
     if (!groupTitle.trim()) return setError("체크리스트 이름을 입력해 주세요.");
     setSaving(true);
     setError("");
@@ -115,15 +115,15 @@ export default function Page() {
     <section className="section dashboard-shell">
       <div className="container" style={{ maxWidth: 1040 }}>
         <div className="section-heading page-heading">
-          <div><p className="eyebrow">Checklist</p><h1 className="section-title">내 커뮤니티 체크리스트</h1><p className="muted">커뮤니티별 준비 업무를 만들고 완료 상태를 관리하세요.</p></div>
+          <div><p className="eyebrow">Checklist</p><h1 className="section-title">내 모임 체크리스트</h1><p className="muted">모임별 준비 업무를 만들고 완료 상태를 관리하세요.</p></div>
           <button type="button" className="btn btn-primary" disabled={!communityId} onClick={() => setShowCreate(true)}><Plus /> 체크리스트 만들기</button>
         </div>
 
         {error && <p className="error-summary" role="alert">{error}</p>}
         {!communities.length ? (
-          <div className="empty"><CheckSquare2 size={40} /><h3>운영 중인 커뮤니티가 없습니다.</h3><p className="muted">커뮤니티를 먼저 만든 후 체크리스트를 추가할 수 있어요.</p></div>
+          <div className="empty"><CheckSquare2 size={40} /><h3>운영 중인 모임이 없습니다.</h3><p className="muted">모임을 먼저 만든 후 체크리스트를 추가할 수 있어요.</p></div>
         ) : <>
-          <div className="checklist-toolbar"><label>커뮤니티<select className="field" value={communityId} onChange={(event) => { setCommunityId(event.target.value); setShowCreate(false); }}><option value="">선택</option>{communities.map((community) => <option value={community.id} key={community.id}>{community.name}</option>)}</select></label><ChecklistSuggestionPanel communityId={communityId} schedules={schedules} groups={visible} onApplied={reload}/></div>
+          <div className="checklist-toolbar"><label>모임<select className="field" value={communityId} onChange={(event) => { setCommunityId(event.target.value); setShowCreate(false); }}><option value="">선택</option>{communities.map((community) => <option value={community.id} key={community.id}>{community.name}</option>)}</select></label><ChecklistSuggestionPanel communityId={communityId} schedules={schedules} groups={visible} onApplied={reload}/></div>
 
           {showCreate && <form className="panel checklist-create" onSubmit={addGroup}>
             <div><h2>새 체크리스트 만들기</h2><p className="muted">예: 모임 전 준비, 장소 준비, 홍보 및 모집</p></div>
@@ -143,7 +143,7 @@ export default function Page() {
               <button type="button" aria-label="삭제" onClick={() => void remove(item.id)}><Trash2 size={16} /></button>
             </div>)}</div>
             <form className="checklist-item-form" onSubmit={(event) => void addItem(event, group.id)}><input className="field" placeholder="새 할 일 입력" value={itemTitles[group.id] ?? ""} onChange={(event) => setItemTitles((current) => ({ ...current, [group.id]: event.target.value }))} /><button className="btn btn-primary"><Plus /> 추가</button></form>
-          </section>)}</div> : !showCreate && <div className="empty checklist-empty"><CheckSquare2 size={42} /><h3>이 커뮤니티의 체크리스트가 없어요.</h3><p className="muted">첫 체크리스트를 만들고 준비할 일을 하나씩 관리해 보세요.</p><button type="button" className="btn btn-primary" onClick={() => setShowCreate(true)}><Plus /> 첫 체크리스트 만들기</button></div>}
+          </section>)}</div> : !showCreate && <div className="empty checklist-empty"><CheckSquare2 size={42} /><h3>이 모임의 체크리스트가 없어요.</h3><p className="muted">첫 체크리스트를 만들고 준비할 일을 하나씩 관리해 보세요.</p><button type="button" className="btn btn-primary" onClick={() => setShowCreate(true)}><Plus /> 첫 체크리스트 만들기</button></div>}
         </>}
       </div>
     </section>

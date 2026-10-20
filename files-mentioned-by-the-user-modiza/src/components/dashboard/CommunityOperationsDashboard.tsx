@@ -218,7 +218,7 @@ export function CommunityOperationsDashboard({
       ...item,
       groupTitle: group.title,
       communityId: group.communityId,
-      communityName: group.communityId ? communityById.get(group.communityId)?.name ?? "커뮤니티" : "커뮤니티",
+      communityName: group.communityId ? communityById.get(group.communityId)?.name ?? "모임" : "모임",
     })),
   );
   const checklistProgress = allChecklistItems.length
@@ -253,14 +253,14 @@ export function CommunityOperationsDashboard({
     </section>
 
     <div className="dashboard-stats">
-      <Link href="/dashboard/communities" className="dashboard-stat"><Users /><span>운영 중인 커뮤니티</span><strong>{published.length}개</strong></Link>
+      <Link href="/dashboard/communities" className="dashboard-stat"><Users /><span>운영 중인 모임</span><strong>{published.length}개</strong></Link>
       <Link href="/dashboard/applications?status=pending" className="dashboard-stat"><ClipboardCheck /><span>승인 대기 신청</span><strong>{data.applications.filter((item) => item.status === "pending").length}건</strong></Link>
       <Link href="/dashboard/schedules" className="dashboard-stat"><CalendarDays /><span>7일 내 일정</span><strong>{nextSevenDays.length}개</strong></Link>
       <Link href="/dashboard/checklists" className="dashboard-stat"><ListChecks /><span>미완료 준비</span><strong>{incompleteItems.length}개</strong></Link>
     </div>
 
     <section className="dashboard-section">
-      <div className="section-heading"><div><p className="eyebrow">운영 커뮤니티</p><h2>내가 운영하는 커뮤니티</h2></div><Link href="/dashboard/communities">전체 관리 →</Link></div>
+      <div className="section-heading"><div><p className="eyebrow">운영 모임</p><h2>내가 운영하는 모임</h2></div><Link href="/dashboard/communities">전체 관리 →</Link></div>
       <SectionError message={data.errors.communities} />
       {data.communities.length ? <div className="operations-community-list">{data.communities.map((community) => {
         const schedule = nextScheduleByCommunity.get(community.id);
@@ -287,14 +287,14 @@ export function CommunityOperationsDashboard({
             <span><ListChecks />남은 운영 업무 <b>{unfinished}개</b></span>
           </div>
           <div className="operations-community-actions">
-            <Link className="btn btn-ghost btn-small" href={`/dashboard/communities/${community.id}/edit`}>커뮤니티 관리</Link>
+            <Link className="btn btn-ghost btn-small" href={`/dashboard/communities/${community.id}/edit`}>모임 관리</Link>
             {pending > 0 && <Link className="btn btn-ghost btn-small" href={`/dashboard/applications?communityId=${community.id}&status=pending`}>신청 확인</Link>}
             {!community.linkedSpaceId && <Link className="btn btn-ghost btn-small" href={recommendationHref(community)}>공간 찾기</Link>}
             {!openChats.has(community.id) && <Link className="btn btn-ghost btn-small" href={`/communities/${encodeURIComponent(community.slug)}/open-chat/setup`}><MessageCircle />오픈채팅 등록</Link>}
             {place && <MapViewButton address={[place.address, place.addressDetail].filter(Boolean).join(" ")} placeName={place.name} />}
           </div>
         </article>;
-      })}</div> : <div className="empty compact"><Users /><h3>아직 운영 중인 커뮤니티가 없어요.</h3><p className="muted">첫 커뮤니티를 만들면 운영 업무를 이곳에서 한눈에 관리할 수 있어요.</p><Link className="btn btn-primary" href="/communities/register">첫 커뮤니티 만들기</Link></div>}
+      })}</div> : <div className="empty compact"><Users /><h3>아직 운영 중인 모임이 없어요.</h3><p className="muted">첫 모임을 만들면 운영 업무를 이곳에서 한눈에 관리할 수 있어요.</p><Link className="btn btn-primary" href="/communities/register">첫 모임 만들기</Link></div>}
     </section>
 
     <section className="dashboard-section">
@@ -308,7 +308,7 @@ export function CommunityOperationsDashboard({
       {incompleteItems.length ? <div className="dashboard-list">{incompleteItems.slice(0, 3).map((item) => <article className="dashboard-row" key={item.id}>
         <div><strong>{item.title}</strong><p>{item.communityName} · {item.groupTitle}{item.dueDate ? ` · ${koDate(item.dueDate)}까지` : ""}</p></div>
         <Link href={`/dashboard/checklists?communityId=${item.communityId ?? ""}`}>확인</Link>
-      </article>)}</div> : <div className="operations-clear compact"><CheckCircle2 /><div><strong>{allChecklistItems.length ? "모든 준비 항목을 완료했어요." : "아직 만든 체크리스트가 없어요."}</strong><p>{allChecklistItems.length ? "다가오는 일정을 차분히 준비해보세요." : "커뮤니티별 준비 항목을 만들어 운영을 시작해보세요."}</p></div></div>}
+      </article>)}</div> : <div className="operations-clear compact"><CheckCircle2 /><div><strong>{allChecklistItems.length ? "모든 준비 항목을 완료했어요." : "아직 만든 체크리스트가 없어요."}</strong><p>{allChecklistItems.length ? "다가오는 일정을 차분히 준비해보세요." : "모임별 준비 항목을 만들어 운영을 시작해보세요."}</p></div></div>}
     </section>
 
     <section className="dashboard-section">
@@ -349,7 +349,7 @@ export function CommunityOperationsDashboard({
       <div className="operations-secondary-actions">
         <Link href="/dashboard/checklists"><ListChecks />체크리스트 관리</Link>
         <Link href="/dashboard/schedules"><Clock3 />일정 관리</Link>
-        <Link href="/communities/register"><Users />새 커뮤니티 만들기</Link>
+        <Link href="/communities/register"><Users />새 모임 만들기</Link>
         <AnnouncementComposer communities={data.communities} schedules={data.schedules} label="참가자 공지" className="operations-link-button" />
       </div>
     </section>

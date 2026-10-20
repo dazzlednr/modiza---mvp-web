@@ -106,7 +106,7 @@ export function AnnouncementComposer({
         </div>
         <p className="muted">모디자의 제안은 초안입니다. 내용을 확인하고 수정한 뒤 필요한 채널에 직접 복사해 사용해주세요.</p>
         <div className="grid form-grid">
-          <label>커뮤니티
+          <label>모임
             <select className="field" value={communityId} onChange={(event) => { setCommunityId(event.target.value); setScheduleId(""); }}>
               {communities.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
             </select>

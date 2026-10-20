@@ -11,5 +11,4 @@ export type CommunityFavorite = {
 export type RecommendedCommunity = {
   community: Community;
   score: number;
-  reasons: string[];
 };

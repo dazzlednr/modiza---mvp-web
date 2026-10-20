@@ -49,6 +49,6 @@ export function MeetingManagement({ initialItems }: { initialItems: Meeting[] })
         {meeting.status !== "draft" && <Link className="btn btn-ghost btn-small" href={`/meetings/${meeting.slug}`}><ExternalLink />공개 화면</Link>}
         {allowedMeetingStatusTransitions[meeting.status].map((next) => <button key={next} className={`btn btn-small ${next === "cancelled" ? "btn-danger" : next === "recruiting" ? "btn-primary" : "btn-ghost"}`} type="button" disabled={busy === meeting.id} onClick={() => status(meeting.id, next)}>{next === "recruiting" && meeting.status === "closed" ? "모집 재개" : meetingStatusLabels[next]}</button>)}
       </div>
-    </div>)}</div> : <div className="empty"><h2>조건에 맞는 모임이 없어요.</h2><p className="muted">커뮤니티 등록으로 첫 모임을 시작해보세요.</p><Link className="btn btn-primary" href="/communities/register"><Plus />첫 모임 만들기</Link></div>}
+    </div>)}</div> : <div className="empty"><h2>조건에 맞는 모임이 없어요.</h2><p className="muted">모임 등록으로 첫 모임을 시작해보세요.</p><Link className="btn btn-primary" href="/communities/register"><Plus />첫 모임 만들기</Link></div>}
   </>;
 }

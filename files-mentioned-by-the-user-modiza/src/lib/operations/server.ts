@@ -39,7 +39,7 @@ export async function parseOperationSuggestion<T extends z.ZodTypeAny>(schema:T,
 export function operationErrorMessage(error:unknown){
   const code=error instanceof Error?error.message:"";
   if(code==="AUTH_REQUIRED")return {status:401,message:"로그인이 만료되었어요. 다시 로그인해주세요."};
-  if(code==="COMMUNITY_FORBIDDEN")return {status:403,message:"이 커뮤니티의 운영 도구를 사용할 권한이 없어요."};
+  if(code==="COMMUNITY_FORBIDDEN")return {status:403,message:"이 모임의 운영 도구를 사용할 권한이 없어요."};
   if(code==="SCHEDULE_NOT_FOUND")return {status:400,message:"제안을 위해 필요한 정보를 먼저 입력해주세요."};
   if(code==="RATE_LIMITED"||code==="DUPLICATE_REQUEST"||code==="OPERATION_AI_DISABLED")return {status:429,message:"현재 제안 기능을 잠시 사용할 수 없어요. 직접 작성 기능은 정상적으로 이용할 수 있습니다."};
   return {status:502,message:"모디자가 제안을 준비하지 못했어요. 잠시 후 다시 시도해주세요."};

@@ -34,7 +34,7 @@ export default async function MeetingDetailPage({ params }: { params: Promise<{ 
     <div className="meeting-detail-grid"><main>
       <section className="panel meeting-detail-story"><p className="eyebrow">About</p><h2>모임 소개</h2><p>{meeting.description || "운영자가 상세 소개를 준비하고 있어요."}</p></section>
       <section className="panel meeting-detail-story"><p className="eyebrow">Preparation</p><h2>준비물</h2><p>{meeting.preparationItems || "별도 준비물은 없습니다."}</p></section>
-      {meeting.participantEligibility === "community_members" && <section className="panel meeting-members-note"><Users /><div><strong>연결된 커뮤니티 회원 대상 설정</strong><p>회원 자격 자동 검증은 후속 개발에서 연결될 예정입니다. 현재는 운영자가 신청 단계에서 확인해야 합니다.</p></div></section>}
+      {meeting.participantEligibility === "community_members" && <section className="panel meeting-members-note"><Users /><div><strong>연결된 모임 회원 대상 설정</strong><p>회원 자격 자동 검증은 후속 개발에서 연결될 예정입니다. 현재는 운영자가 신청 단계에서 확인해야 합니다.</p></div></section>}
     </main><aside className="panel meeting-detail-summary">
       <h2>모임 정보</h2>
       <div><CalendarDays /><span>일정</span><strong>{date}<br />{meeting.startTime ?? ""}{meeting.endTime ? `–${meeting.endTime}` : ""}</strong></div>

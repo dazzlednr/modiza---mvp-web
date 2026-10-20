@@ -11,7 +11,7 @@ export async function GET(){try{const {supabase,user}=await requireApiUser();ret
 async function save(request:Request,editing:boolean){
   try{
     const {supabase,user,profile}=await requireApiUser();
-    if(profile?.communityHostRevokedAt)return NextResponse.json({message:"관리자에 의해 커뮤니티 운영 권한이 회수된 계정입니다."},{status:403});
+    if(profile?.communityHostRevokedAt)return NextResponse.json({message:"관리자에 의해 모임 운영 권한이 회수된 계정입니다."},{status:403});
     const form=await request.formData();
     const parsed=schema.safeParse({headline:form.get("headline"),introduction:form.get("introduction"),activityRegion:form.get("activityRegion")??"",interestCategories:parseArray(form,"interestCategories"),operatingStyles:parseArray(form,"operatingStyles")});
     if(!parsed.success){

@@ -50,7 +50,6 @@ export function Header({ user }: { user: HeaderUser }) {
   }, [mobileOpen]);
 
   const communityActive = pathname === "/communities" || pathname.startsWith("/communities/");
-  const meetingsActive = pathname === "/meetings" || pathname.startsWith("/meetings/");
   const favoritesActive = pathname === "/mypage/favorites";
   const communityHost = user ? hasRole(user, "community_host") : false;
   const spaceHost = user ? hasRole(user, "space_host") : false;
@@ -73,9 +72,8 @@ export function Header({ user }: { user: HeaderUser }) {
       <div className="container header-inner">
         <Link className="logo" href="/" aria-label="MODIZA 홈">MODI<span>ZA</span></Link>
         <nav className="nav desktop-nav" aria-label="주요 탐색">
-          <HeaderLink href="/communities" active={communityActive}>커뮤니티</HeaderLink>
-          <HeaderLink href="/meetings" active={meetingsActive}>모임</HeaderLink>
-          <HeaderLink href="/mypage/favorites" active={favoritesActive}>관심 커뮤니티</HeaderLink>
+          <HeaderLink href="/communities" active={communityActive}>모임</HeaderLink>
+          <HeaderLink href="/mypage/favorites" active={favoritesActive}>관심 모임</HeaderLink>
         </nav>
 
         <div className="actions">
@@ -117,9 +115,8 @@ export function Header({ user }: { user: HeaderUser }) {
                     </div>
                     {communityHost && (
                       <div className="profile-dropdown-group">
-                        <strong className="profile-dropdown-label">커뮤니티 운영</strong>
-                        <Link role="menuitem" href="/dashboard/meetings" onClick={closeProfile}>내 모임</Link>
-                        <Link role="menuitem" href="/dashboard?view=community" onClick={closeProfile}>내 커뮤니티</Link>
+                        <strong className="profile-dropdown-label">모임 운영</strong>
+                        <Link role="menuitem" href="/dashboard?view=community" onClick={closeProfile}>모임 운영 관리</Link>
                         <Link role="menuitem" href="/dashboard/applications" onClick={closeProfile}>신청자 관리</Link>
                       </div>
                     )}
@@ -168,14 +165,13 @@ export function Header({ user }: { user: HeaderUser }) {
           <div className="container mobile-menu-inner">
             <section>
               <strong>탐색</strong>
-              <HeaderLink href="/communities" active={communityActive} onClick={closeMobile}>커뮤니티</HeaderLink>
-              <HeaderLink href="/meetings" active={meetingsActive} onClick={closeMobile}>모임</HeaderLink>
-              <HeaderLink href="/mypage/favorites" active={favoritesActive} onClick={closeMobile}>관심 커뮤니티</HeaderLink>
+              <HeaderLink href="/communities" active={communityActive} onClick={closeMobile}>모임</HeaderLink>
+              <HeaderLink href="/mypage/favorites" active={favoritesActive} onClick={closeMobile}>관심 모임</HeaderLink>
             </section>
             <section>
               <strong>등록</strong>
               <Link href="/communities/register" onClick={closeMobile}>모임 만들기</Link>
-              <Link href="/communities/register" onClick={closeMobile}>커뮤니티 등록</Link>
+              <Link href="/communities/register" onClick={closeMobile}>모임 등록</Link>
               <Link href="/spaces/register" onClick={closeMobile}>공간 등록</Link>
             </section>
             {user ? (
@@ -188,9 +184,8 @@ export function Header({ user }: { user: HeaderUser }) {
                 </section>
                 {communityHost && (
                   <section>
-                    <strong>커뮤니티 운영</strong>
-                    <Link href="/dashboard/meetings" onClick={closeMobile}>내 모임</Link>
-                    <Link href="/dashboard?view=community" onClick={closeMobile}>내 커뮤니티</Link>
+                    <strong>모임 운영</strong>
+                    <Link href="/dashboard?view=community" onClick={closeMobile}>모임 운영 관리</Link>
                     <Link href="/dashboard/applications" onClick={closeMobile}>신청자 관리</Link>
                   </section>
                 )}
@@ -227,5 +222,5 @@ export function Header({ user }: { user: HeaderUser }) {
 }
 
 export function Footer() {
-  return <footer className="footer"><div className="container footer-grid"><div><div className="logo">MODI<span>ZA</span></div><p className="muted">모임 운영자의 반복 업무를 줄이는 운영 SaaS</p></div><div className="meta"><Link href="/support">모디자 소개</Link><a href="#">이용약관</a><a href="#">개인정보처리방침</a><Link href="/communities/register">모임 만들기</Link><Link href="/communities/register">커뮤니티 등록</Link><Link href="/spaces/register">공간 등록</Link><a href="mailto:hello@modiza.kr">문의하기</a></div></div></footer>;
+  return <footer className="footer"><div className="container footer-grid"><div><div className="logo">MODI<span>ZA</span></div><p className="muted">모임 운영자의 반복 업무를 줄이는 운영 SaaS</p></div><div className="meta"><Link href="/support">모디자 소개</Link><a href="#">이용약관</a><a href="#">개인정보처리방침</a><Link href="/communities/register">모임 만들기</Link><Link href="/communities/register">모임 등록</Link><Link href="/spaces/register">공간 등록</Link><a href="mailto:hello@modiza.kr">문의하기</a></div></div></footer>;
 }

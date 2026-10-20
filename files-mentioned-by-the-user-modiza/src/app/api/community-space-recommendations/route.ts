@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       results,
       recommendationType: "rule_based",
-      message: "입력한 커뮤니티 조건과 등록 공간 정보를 규칙으로 비교한 결과입니다.",
+      message: "입력한 모임 조건과 등록 공간 정보를 규칙으로 비교한 결과입니다.",
     });
   } catch (error) {
     const status = apiAuthStatus(error) ?? 500;

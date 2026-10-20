@@ -47,7 +47,7 @@ export function CommunityQuickCreateForm({
         </div>
       </div>
       <label>
-        커뮤니티 이름
+        모임 이름
         <input className="field" required minLength={2} value={name} onChange={(event) => setName(event.target.value)} />
       </label>
       <div className="grid form-grid">

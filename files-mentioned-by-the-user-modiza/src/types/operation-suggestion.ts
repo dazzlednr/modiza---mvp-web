@@ -17,7 +17,7 @@ export const MessageSuggestionSchema=z.object({title:z.string().trim().min(1).ma
 export type MessageSuggestion=z.infer<typeof MessageSuggestionSchema>;
 
 export const ChecklistSuggestionInputSchema=z.object({communityId:z.string().uuid(),scheduleId:z.string().uuid().nullable().optional(),target:z.enum(["next","specific","common"]),scope:z.enum(["모임 전","모임 당일","모임 이후","전체"]),special:z.string().trim().max(500).default(""),activity:z.string().trim().max(500).default(""),exclude:z.string().trim().max(500).default(""),variation:z.string().trim().max(200).default("")});
-export const ChecklistSuggestionSchema=z.object({groups:z.array(z.object({name:z.enum(["모임 전","모임 당일","모임 이후","커뮤니티 공통"]),items:z.array(z.string().trim().min(1).max(120)).min(1).max(6)})).min(1).max(4)}).superRefine((value,ctx)=>{if(value.groups.flatMap(group=>group.items).length>15)ctx.addIssue({code:"custom",message:"체크리스트 제안은 최대 15개입니다."});});
+export const ChecklistSuggestionSchema=z.object({groups:z.array(z.object({name:z.enum(["모임 전","모임 당일","모임 이후","모임 공통"]),items:z.array(z.string().trim().min(1).max(120)).min(1).max(6)})).min(1).max(4)}).superRefine((value,ctx)=>{if(value.groups.flatMap(group=>group.items).length>15)ctx.addIssue({code:"custom",message:"체크리스트 제안은 최대 15개입니다."});});
 export const ChecklistApplySchema=z.object({communityId:z.string().uuid(),groups:ChecklistSuggestionSchema.shape.groups});
 export type ChecklistSuggestion=z.infer<typeof ChecklistSuggestionSchema>;
 

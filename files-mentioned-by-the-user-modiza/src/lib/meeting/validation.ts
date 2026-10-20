@@ -32,7 +32,7 @@ export function getMeetingPublishErrors(value: MeetingInput) {
     errors.push("모집 마감은 모집 시작보다 늦어야 해요.");
   }
   if (value.participantEligibility === "community_members" && !value.communityId) {
-    errors.push("커뮤니티 회원 전용 모임은 커뮤니티를 연결해야 해요.");
+    errors.push("모임 회원 전용 모임은 모임을 연결해야 해요.");
   }
   return errors;
 }
@@ -47,6 +47,6 @@ export function getMeetingErrorMessage(error: unknown) {
   if (message.startsWith("MEETING_NOT_READY:")) return message.slice("MEETING_NOT_READY:".length).split("|")[0];
   if (message.includes("INVALID_MEETING_STATUS_TRANSITION")) return "현재 상태에서는 요청한 상태로 변경할 수 없어요.";
   if (message === "MEETING_NOT_FOUND") return "모임을 찾을 수 없거나 수정 권한이 없어요.";
-  if (message === "COMMUNITY_NOT_OWNED") return "내가 운영하는 커뮤니티만 연결할 수 있어요.";
+  if (message === "COMMUNITY_NOT_OWNED") return "내가 운영하는 모임만 연결할 수 있어요.";
   return "모임 정보를 처리하지 못했어요. 잠시 후 다시 시도해 주세요.";
 }

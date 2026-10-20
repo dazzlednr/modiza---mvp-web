@@ -26,7 +26,7 @@ function failed(error: unknown, fallback: string) {
   const status = apiAuthStatus(error) ?? 500;
   const value = error as { code?: string; message?: string };
   const known: Record<string, string> = {
-    COMMUNITY_NOT_FOUND: "운영 중인 커뮤니티를 다시 선택해 주세요.",
+    COMMUNITY_NOT_FOUND: "운영 중인 모임을 다시 선택해 주세요.",
     SPACE_NOT_AVAILABLE: "현재 이용 요청을 보낼 수 없는 공간이에요.",
     OWN_SPACE_REQUEST_NOT_ALLOWED: "본인이 운영하는 공간에는 이용 요청을 보낼 수 없어요.",
     INVALID_ATTENDEE_COUNT: "공간의 최대 수용 인원에 맞게 인원을 입력해 주세요.",

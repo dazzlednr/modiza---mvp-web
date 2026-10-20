@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const reason = rawReason || null;
     const { admin, supabase, user } = await requireApiAdmin();
     if (action === "member_revoke_community_host" && !reason) {
-      return NextResponse.json({ message: "커뮤니티 운영 권한 회수 사유를 입력해 주세요." }, { status: 400 });
+      return NextResponse.json({ message: "모임 운영 권한 회수 사유를 입력해 주세요." }, { status: 400 });
     }
 
     if (action === "approve_host" || action === "reject_host") {

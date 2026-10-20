@@ -96,7 +96,7 @@ export async function GET() {
     if (authStatus) return NextResponse.json({ message: error instanceof Error ? error.message : "권한이 없어요." }, { status: authStatus });
     logDatabaseError("list failed", error);
     return NextResponse.json(
-      { message: "커뮤니티 목록을 불러오지 못했어요." },
+      { message: "모임 목록을 불러오지 못했어요." },
       { status: 500 },
     );
   }
@@ -143,8 +143,8 @@ export async function POST(request: Request) {
 
     const values = normalizeDates(CommunityFormSchema.parse({
       category: "취미",
-      shortDescription: "작성 중인 커뮤니티입니다.",
-      description: "작성 중인 커뮤니티입니다.",
+      shortDescription: "작성 중인 모임입니다.",
+      description: "작성 중인 모임입니다.",
       mainRegion: PRIMARY_REGION,
       detailedRegion: "기타",
       customRegion: "작성 중",
@@ -216,7 +216,7 @@ export async function POST(request: Request) {
         });
       } catch (error) {
         logDatabaseError("initial schedule failed", error);
-        scheduleWarning = "커뮤니티는 등록됐지만 첫 일정은 저장하지 못했어요. 대시보드에서 다시 추가해 주세요.";
+        scheduleWarning = "모임는 등록됐지만 첫 일정은 저장하지 못했어요. 대시보드에서 다시 추가해 주세요.";
       }
     }
 
@@ -237,7 +237,7 @@ export async function POST(request: Request) {
     }
     return NextResponse.json(
       {
-        message: `커뮤니티를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.${localDebugSuffix(error)}`,
+        message: `모임을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.${localDebugSuffix(error)}`,
         ...localDebug(error),
       },
       { status: 500 },

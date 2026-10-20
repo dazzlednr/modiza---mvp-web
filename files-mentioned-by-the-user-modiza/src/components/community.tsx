@@ -28,13 +28,11 @@ export function CommunityCard({
   c,
   favorite = false,
   authenticated = false,
-  reason,
   variant = "default",
 }: {
   c: Community;
   favorite?: boolean;
   authenticated?: boolean;
-  reason?: string;
   variant?: CommunityCardVariant;
 }) {
   const status = calculateRecruitmentStatus(c);
@@ -46,7 +44,6 @@ export function CommunityCard({
       <h3 className="community-card-title">{c.name}</h3>
       {!dashboard && <p className="muted community-card-description">{c.shortDescription}</p>}
       <div className="meta community-card-meta"><span><MapPin size={15} />{formatRegion(c.mainRegion, c.detailedRegion, c.customRegion)}</span><span className="community-card-schedule"><CalendarDays size={15} color="var(--primary)" />{formatMeeting(c.nextMeetingAt)}</span></div>
-      {reason && <p className="recommendation-reason">{reason}</p>}
       <Link className="community-card-link" href={`/communities/${c.slug}`}>{"\uC790\uC138\uD788 \uBCF4\uAE30 \u2192"}</Link>
     </div>
   </article>;
@@ -56,19 +53,17 @@ export function CommunityGrid({
   items,
   favoriteIds = [],
   authenticated = false,
-  reasons = {},
   variant = "default",
   className = "",
 }: {
   items: Community[];
   favoriteIds?: string[];
   authenticated?: boolean;
-  reasons?: Record<string, string>;
   variant?: CommunityCardVariant;
   className?: string;
 }) {
   const favorites = new Set(favoriteIds);
-  return <div className={`grid cards ${className}`.trim()}>{items.map((community) => <CommunityCard key={community.id} c={community} favorite={favorites.has(community.id)} authenticated={authenticated} reason={reasons[community.id]} variant={variant} />)}</div>;
+  return <div className={`grid cards ${className}`.trim()}>{items.map((community) => <CommunityCard key={community.id} c={community} favorite={favorites.has(community.id)} authenticated={authenticated} variant={variant} />)}</div>;
 }
 
 type CommunitySort = "recommended" | "latest" | "upcoming";
@@ -105,13 +100,13 @@ export function CommunityExplorer({ items, compact = false, initialRegion = "전
 
   return <>
     {compact && <div id="categories" className="category-row">{["전체", ...communityCategories].map((item) => <button type="button" className={`category ${category === item ? "active" : ""}`} key={item} onClick={() => selectCategory(item)}>{item}</button>)}</div>}
-    <label style={{ position: "relative", margin: "16px 0 8px" }}><span className="sr-only">커뮤니티 검색</span><Search size={18} style={{ position: "absolute", left: 16, top: 15 }} /><input aria-label="커뮤니티 검색" className="field" style={{ paddingLeft: 46 }} type="search" name="community-search" placeholder="관심 있는 모임을 찾아보세요." value={query} onChange={(event) => setQuery(event.target.value)} autoComplete="off" autoCorrect="off" spellCheck={false} inputMode="search" /></label>
+    <label style={{ position: "relative", margin: "16px 0 8px" }}><span className="sr-only">모임 검색</span><Search size={18} style={{ position: "absolute", left: 16, top: 15 }} /><input aria-label="모임 검색" className="field" style={{ paddingLeft: 46 }} type="search" name="community-search" placeholder="관심 있는 모임을 찾아보세요." value={query} onChange={(event) => setQuery(event.target.value)} autoComplete="off" autoCorrect="off" spellCheck={false} inputMode="search" /></label>
     {!compact && <div className="filters" style={{ gridTemplateColumns: "repeat(3,minmax(0,1fr))" }}>
       <select aria-label="카테고리 필터" className="field" value={category} onChange={(event) => selectCategory(event.target.value)}><option value="전체">카테고리 전체</option>{communityCategories.map((item) => <option key={item}>{item}</option>)}</select>
       <select aria-label="지역 필터" className="field" value={region} onChange={(event) => setRegion(event.target.value)}><option value="전체 보기">지역 전체</option>{representativeRegions.map((item) => <option key={item}>{item}</option>)}</select>
       <select aria-label="정렬 기준" className="field" value={sort} onChange={(event) => setSort(event.target.value as CommunitySort)}><option value="recommended">추천순</option><option value="latest">최신순</option><option value="upcoming">가까운 일정순</option></select>
     </div>}
-    <p className="muted">{list.length}개의 커뮤니티를 찾았어요.</p>
-    {list.length ? <CommunityGrid items={compact ? list.slice(0, 4) : list} favoriteIds={favoriteIds} authenticated={authenticated} /> : <div className="empty"><h3>검색 조건에 맞는 커뮤니티가 아직 없어요.</h3></div>}
+    <p className="muted">{list.length}개의 모임을 찾았어요.</p>
+    {list.length ? <CommunityGrid items={compact ? list.slice(0, 4) : list} favoriteIds={favoriteIds} authenticated={authenticated} /> : <div className="empty"><h3>검색 조건에 맞는 모임이 아직 없어요.</h3></div>}
   </>;
 }

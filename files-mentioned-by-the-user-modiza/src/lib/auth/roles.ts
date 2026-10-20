@@ -10,7 +10,7 @@ export function normalizeRoles(roles: unknown): UserRole[] {
 export function addRole(currentRoles: unknown, newRole: UserRole) { return normalizeRoles([...normalizeRoles(currentRoles), newRole]); }
 export function hasRole(profile: Pick<Profile,"roles"> | null | undefined, role: UserRole) { return Boolean(profile && normalizeRoles(profile.roles).includes(role)); }
 export function hasAnyRole(profile: Pick<Profile,"roles"> | null | undefined, roles: UserRole[]) { return roles.some((role) => hasRole(profile, role)); }
-export function getRoleLabel(role: UserRole) { return ({ member:"일반 회원", community_host:"커뮤니티 운영자", host_pending:"공간 운영자 승인 대기", space_host:"공간 운영자", admin:"관리자" })[role]; }
+export function getRoleLabel(role: UserRole) { return ({ member:"일반 회원", community_host:"모임 운영자", host_pending:"공간 운영자 승인 대기", space_host:"공간 운영자", admin:"관리자" })[role]; }
 export const selfActivatableRoles=["community_host"] as const satisfies readonly UserRole[];
 export type SelfActivatableRole=(typeof selfActivatableRoles)[number];
 export function isSelfActivatableRole(value:unknown):value is SelfActivatableRole{return selfActivatableRoles.some((role)=>role===value);}

@@ -71,11 +71,11 @@ export function ApplicationForm({ community, applicant }: {
         <button type="button" className="dialog-close" aria-label="닫기" onClick={() => setOpen(false)}><X /></button>
         {done ? <div className="application-success">
           <CheckCircle2 size={58} color="var(--success)" aria-hidden="true" />
-          <h2>커뮤니티 신청이 완료되었어요 🎉</h2>
+          <h2>모임 신청이 완료되었어요 🎉</h2>
           <p>운영자가 신청 내용을 확인한 뒤 참가 여부를 안내해드릴게요.</p>
           <p className="application-success-note">참가가 확정되면 사이트 내 알림을 통해 안내드리며,<br />오픈채팅방이 등록되어 있는 경우 함께 입장할 수 있도록 안내됩니다.</p>
           <div className="application-success-actions">
-            <Link className="btn btn-ghost" href="/communities">다른 커뮤니티 둘러보기</Link>
+            <Link className="btn btn-ghost" href="/communities">다른 모임 둘러보기</Link>
             <Link className="btn btn-primary" href="/mypage/applications">신청 내역 보기</Link>
           </div>
         </div> : <form className="form" onSubmit={submit}>

@@ -12,7 +12,7 @@ export async function POST(request:Request){
     const {data:existing,error}=await supabase.from("checklist_groups").select("title,checklist_items(title)").eq("community_id",parsed.data.communityId);if(error)throw error;
     const suggestion=await parseOperationSuggestion(ChecklistSuggestionSchema,"operation_checklist_suggestion",OPERATION_CHECKLIST_PROMPT,{context,request:parsed.data,existingItems:(existing??[]).flatMap(group=>(group.checklist_items??[]).map((item:{title:string})=>item.title))});
     return NextResponse.json({suggestion});
-  }catch(error){console.error("[MODIZA][operation-checklist] suggestion failed",error);const status=apiAuthStatus(error);if(status)return NextResponse.json({message:status===401?"로그인이 만료되었어요. 다시 로그인해주세요.":"이 커뮤니티의 운영 도구를 사용할 권한이 없어요."},{status});const failure=operationErrorMessage(error);return NextResponse.json({message:failure.message},{status:failure.status});}
+  }catch(error){console.error("[MODIZA][operation-checklist] suggestion failed",error);const status=apiAuthStatus(error);if(status)return NextResponse.json({message:status===401?"로그인이 만료되었어요. 다시 로그인해주세요.":"이 모임의 운영 도구를 사용할 권한이 없어요."},{status});const failure=operationErrorMessage(error);return NextResponse.json({message:failure.message},{status:failure.status});}
 }
 
 export async function PUT(request:Request){
@@ -24,5 +24,5 @@ export async function PUT(request:Request){
     for(const proposed of parsed.data.groups){let group=existingGroups.find(item=>item.title===proposed.name);if(!group){const created=await supabase.from("checklist_groups").insert({community_id:parsed.data.communityId,title:proposed.name,display_order:existingGroups.length}).select("id,title,display_order").single();if(created.error)throw created.error;group={...created.data,checklist_items:[]};existingGroups.push(group);}
       const duplicates=new Set((group.checklist_items??[]).map((item:{title:string})=>item.title.trim().toLowerCase()));const items=proposed.items.filter(title=>!duplicates.has(title.trim().toLowerCase())).map(title=>({group_id:group!.id,title}));if(items.length){const inserted=await supabase.from("checklist_items").insert(items);if(inserted.error)throw inserted.error;added+=items.length;}}
     return NextResponse.json({added});
-  }catch(error){console.error("[MODIZA][operation-checklist] apply failed",error);const status=apiAuthStatus(error);if(status)return NextResponse.json({message:status===401?"로그인이 만료되었어요. 다시 로그인해주세요.":"이 커뮤니티의 운영 도구를 사용할 권한이 없어요."},{status});const failure=operationErrorMessage(error);return NextResponse.json({message:failure.message},{status:failure.status});}
+  }catch(error){console.error("[MODIZA][operation-checklist] apply failed",error);const status=apiAuthStatus(error);if(status)return NextResponse.json({message:status===401?"로그인이 만료되었어요. 다시 로그인해주세요.":"이 모임의 운영 도구를 사용할 권한이 없어요."},{status});const failure=operationErrorMessage(error);return NextResponse.json({message:failure.message},{status:failure.status});}
 }

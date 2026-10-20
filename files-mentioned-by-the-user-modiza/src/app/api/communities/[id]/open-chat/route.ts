@@ -13,7 +13,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const applicationId = new URL(request.url).searchParams.get("applicationId");
     const { data: community, error: communityError } = await supabase.from("communities").select("id,name,slug,owner_id").eq("id", communityId).maybeSingle();
     if (communityError) throw communityError;
-    if (!community) return NextResponse.json({ message: "커뮤니티를 찾을 수 없어요." }, { status: 404 });
+    if (!community) return NextResponse.json({ message: "모임을 찾을 수 없어요." }, { status: 404 });
     const owner = community.owner_id === user.id;
     if (!owner) {
       if (!applicationId) return NextResponse.json({ message: "오픈채팅방을 확인할 권한이 없어요." }, { status: 403 });
@@ -40,7 +40,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ ok: true, registered: true, openChatUrl: data.open_chat_url });
   } catch (error) {
     const status = apiAuthStatus(error) ?? ((error as { code?: string }).code === "42501" ? 403 : 500);
-    return NextResponse.json({ message: status === 403 ? "이 커뮤니티의 오픈채팅방을 수정할 권한이 없어요." : "오픈채팅방 링크를 저장하지 못했어요." }, { status });
+    return NextResponse.json({ message: status === 403 ? "이 모임의 오픈채팅방을 수정할 권한이 없어요." : "오픈채팅방 링크를 저장하지 못했어요." }, { status });
   }
 }
 

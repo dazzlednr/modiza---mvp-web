@@ -23,11 +23,11 @@ export function SpaceUseRequestForm({ spaceId, maxCapacity, initialCommunityId =
       fetch("/api/space-use-requests?scope=context", { cache: "no-store", signal: controller.signal })
         .then(async (response) => {
           const result = await response.json();
-          if (!response.ok) throw new Error(result.message || "커뮤니티 목록을 불러오지 못했어요.");
+          if (!response.ok) throw new Error(result.message || "모임 목록을 불러오지 못했어요.");
           setCommunities(result.communities ?? []);
         })
         .catch((caught) => {
-          if (!controller.signal.aborted) setError(caught instanceof Error ? caught.message : "커뮤니티 목록을 불러오지 못했어요.");
+          if (!controller.signal.aborted) setError(caught instanceof Error ? caught.message : "모임 목록을 불러오지 못했어요.");
         })
         .finally(() => {
           if (!controller.signal.aborted) setLoadingContext(false);
@@ -46,10 +46,10 @@ export function SpaceUseRequestForm({ spaceId, maxCapacity, initialCommunityId =
     try {
       const response = await fetch("/api/space-use-requests?scope=context", { cache: "no-store" });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.message || "커뮤니티 목록을 불러오지 못했어요.");
+      if (!response.ok) throw new Error(result.message || "모임 목록을 불러오지 못했어요.");
       setCommunities(result.communities ?? []);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "커뮤니티 목록을 불러오지 못했어요.");
+      setError(caught instanceof Error ? caught.message : "모임 목록을 불러오지 못했어요.");
     } finally {
       setLoadingContext(false);
     }
@@ -92,13 +92,13 @@ export function SpaceUseRequestForm({ spaceId, maxCapacity, initialCommunityId =
   </section>;
 
   return <section className="space-request-callout">
-    <div><strong>이 공간을 커뮤니티 모임에 이용하고 싶으신가요?</strong><p>희망 일정과 인원을 보내면 공간 운영자가 확인합니다. 필요한 경우 공간에 등록된 연락 수단으로 일정과 이용 조건을 협의할 수 있어요.</p></div>
+    <div><strong>이 공간을 모임에 이용하고 싶으신가요?</strong><p>희망 일정과 인원을 보내면 공간 운영자가 확인합니다. 필요한 경우 공간에 등록된 연락 수단으로 일정과 이용 조건을 협의할 수 있어요.</p></div>
     {!open
       ? <button type="button" className="btn btn-primary" onClick={() => void showForm()}><Send />{isConsultation ? "이 공간에 협의 요청" : "이용 요청"}</button>
       : <form className="form space-request-form" onSubmit={submit}>
-        {loadingContext ? <p className="muted">내 커뮤니티를 불러오는 중...</p> : communities.length ? <>
+        {loadingContext ? <p className="muted">내 모임을 불러오는 중...</p> : communities.length ? <>
           <div className="grid form-grid">
-            <label>사용할 커뮤니티<select className="field" name="communityId" required defaultValue={communities.some((community) => community.id === initialCommunityId) ? initialCommunityId : ""}><option value="" disabled>선택해 주세요</option>{communities.map((community) => <option value={community.id} key={community.id}>{community.name}</option>)}</select></label>
+            <label>사용할 모임<select className="field" name="communityId" required defaultValue={communities.some((community) => community.id === initialCommunityId) ? initialCommunityId : ""}><option value="" disabled>선택해 주세요</option>{communities.map((community) => <option value={community.id} key={community.id}>{community.name}</option>)}</select></label>
             <label>예상 인원<input className="field" type="number" name="expectedAttendees" min={1} max={maxCapacity} required /></label>
             <label>희망 날짜<input className="field" type="date" name="requestedDate" min={todayInKorea} required /></label>
             <div className="grid request-time-grid"><label>시작 시간<input className="field" type="time" name="requestedStartTime" required /></label><label>종료 시간<input className="field" type="time" name="requestedEndTime" required /></label></div>
@@ -107,7 +107,7 @@ export function SpaceUseRequestForm({ spaceId, maxCapacity, initialCommunityId =
           <label>전달 메시지 <span className="muted">(선택)</span><textarea className="field" name="message" rows={4} maxLength={1000} placeholder={"안녕하세요.\n7월 24일 독서모임을 진행하고 싶습니다.\n가능 여부 확인 부탁드립니다."} /></label>
           {error && <p className="error-summary" role="alert">{error}</p>}
           <div className="assistant-actions"><button type="button" className="btn btn-ghost" onClick={() => setOpen(false)}>닫기</button><button className="btn btn-primary" disabled={saving}>{saving ? "요청을 보내는 중..." : <><CalendarDays />이용 요청 보내기</>}</button></div>
-        </> : <div className="empty compact"><p>운영 중인 커뮤니티가 없습니다.</p><Link className="btn btn-primary btn-small" href="/communities/register">커뮤니티 만들기</Link></div>}
+        </> : <div className="empty compact"><p>운영 중인 모임이 없습니다.</p><Link className="btn btn-primary btn-small" href="/communities/register">모임 만들기</Link></div>}
         {error && !communities.length && <p className="error-summary" role="alert">{error}</p>}
       </form>}
   </section>;

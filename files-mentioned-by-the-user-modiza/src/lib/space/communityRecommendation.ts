@@ -111,8 +111,8 @@ function timeStatus(space: Space, input: CommunitySpaceRecommendationInput) {
 
   if (space.communityUseMode === "idle_time_only") {
     return availabilityMatches
-      ? { status: "available" as const, label: "바로 이용 가능" as const, summary: "선택한 일정이 등록된 커뮤니티 이용 가능 시간에 포함됩니다." }
-      : { status: "adjustment_required" as const, label: "시간 조정 필요" as const, summary: availability ? `이 공간의 커뮤니티 이용 가능 시간은 ${availability.startTime}~${availability.endTime}입니다.` : "선택한 요일에는 커뮤니티 이용 가능 시간이 등록되어 있지 않습니다." };
+      ? { status: "available" as const, label: "바로 이용 가능" as const, summary: "선택한 일정이 등록된 모임 이용 가능 시간에 포함됩니다." }
+      : { status: "adjustment_required" as const, label: "시간 조정 필요" as const, summary: availability ? `이 공간의 모임 이용 가능 시간은 ${availability.startTime}~${availability.endTime}입니다.` : "선택한 요일에는 모임 이용 가능 시간이 등록되어 있지 않습니다." };
   }
 
   const operating = space.operatingHours.find((item: SpaceOperatingHour) => item.dayOfWeek === meeting.dayOfWeek);
@@ -120,7 +120,7 @@ function timeStatus(space: Space, input: CommunitySpaceRecommendationInput) {
     && contains(operating?.startTime, operating?.endTime, meeting.start, meeting.end);
   const breakConflict = operating ? overlapsBreak(operating, meeting.start, meeting.end) : false;
   if (availabilityMatches && operationMatches && !breakConflict) {
-    return { status: "available" as const, label: "바로 이용 가능" as const, summary: "선택한 일정이 운영 시간과 커뮤니티 이용 가능 시간에 모두 포함됩니다." };
+    return { status: "available" as const, label: "바로 이용 가능" as const, summary: "선택한 일정이 운영 시간과 모임 이용 가능 시간에 모두 포함됩니다." };
   }
   if (breakConflict) {
     return { status: "adjustment_required" as const, label: "시간 조정 필요" as const, summary: `선택한 일정이 브레이크 타임 ${operating?.breakStartTime}~${operating?.breakEndTime}과 겹칩니다.` };
@@ -128,7 +128,7 @@ function timeStatus(space: Space, input: CommunitySpaceRecommendationInput) {
   return {
     status: "adjustment_required" as const,
     label: "시간 조정 필요" as const,
-    summary: availability ? `이 공간의 커뮤니티 이용 가능 시간은 ${availability.startTime}~${availability.endTime}입니다.` : "선택한 요일의 이용 가능 시간을 운영자와 조정해야 합니다.",
+    summary: availability ? `이 공간의 모임 이용 가능 시간은 ${availability.startTime}~${availability.endTime}입니다.` : "선택한 요일의 이용 가능 시간을 운영자와 조정해야 합니다.",
   };
 }
 

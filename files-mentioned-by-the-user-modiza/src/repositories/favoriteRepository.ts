@@ -2,7 +2,9 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { calculateRecruitmentStatus } from "@/lib/community/recruitment";
+import { getMyApplications } from "@/repositories/applicationRepository";
 import { mapCommunity } from "@/repositories/communityRepository";
+import type { Community } from "@/types/community";
 import type { Profile } from "@/types/profile";
 import type { CommunityFavorite, RecommendedCommunity } from "@/types/favorite";
 
@@ -66,39 +68,101 @@ export async function isFavorite(db: SupabaseClient, communityId: string) {
   return (await getFavoriteIds(db)).includes(communityId);
 }
 
+/** MVP recommendation weights. Keep these together so they can be tuned without changing the ranking flow. */
+export const recommendationWeights = {
+  interest: 40,
+  region: 30,
+  activity: 20,
+  recruitment: 10,
+} as const;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function normalized(value: string) {
+  return value.trim().toLocaleLowerCase("ko-KR");
+}
+
+function interestFit(community: Community, interests: string[]) {
+  if (!interests.length) return 0;
+  const comparable = [community.category, community.customCategory ?? "", ...community.tags]
+    .filter(Boolean)
+    .map(normalized);
+  return interests.some((interest) => {
+    const target = normalized(interest);
+    return target.length > 0 && comparable.some((value) => value === target || value.includes(target) || target.includes(value));
+  }) ? 1 : 0;
+}
+
+function regionFit(community: Community, regions: string[]) {
+  if (!regions.length) return 0;
+  const mainRegion = normalized(community.mainRegion);
+  const detailedRegion = normalized(community.detailedRegion);
+  const customRegion = normalized(community.customRegion ?? "");
+
+  let best = 0;
+  for (const region of regions) {
+    const target = normalized(region);
+    if (!target || target === "전체") continue;
+    if ((detailedRegion && target === detailedRegion) || (customRegion && target === customRegion)) best = Math.max(best, 1);
+    else if (target === mainRegion || (detailedRegion && (detailedRegion.includes(target) || target.includes(detailedRegion))) || (customRegion && (customRegion.includes(target) || target.includes(customRegion)))) best = Math.max(best, 0.6);
+    else if (mainRegion && (mainRegion.includes(target) || target.includes(mainRegion))) best = Math.max(best, 0.4);
+  }
+  return best;
+}
+
+function activityFit(community: Community, now: number) {
+  const nextMeeting = community.nextMeetingAt ? new Date(community.nextMeetingAt).getTime() : Number.NaN;
+  if (Number.isFinite(nextMeeting) && nextMeeting > now) return 1;
+
+  // A new community should remain discoverable even before its first schedule is fixed.
+  const ageDays = Math.max(0, (now - new Date(community.createdAt).getTime()) / DAY_MS);
+  if (ageDays <= 30) return 0.6;
+  if (ageDays <= 90) return 0.35;
+  return 0.15;
+}
+
+function canRecommend(community: Community, now: number) {
+  if (community.status !== "published" || community.visibility !== "discover") return false;
+  if (community.nextMeetingAt && new Date(community.nextMeetingAt).getTime() <= now) return false;
+  return true;
+}
+
 export async function getRecommendedCommunities(
   db: SupabaseClient,
   profile: Profile | null,
   limit = 6,
 ): Promise<RecommendedCommunity[]> {
-  const [{ data, error }, favorites] = await Promise.all([
-    db.from("communities").select("*").eq("status", "published"),
+  const [{ data, error }, favorites, applications] = await Promise.all([
+    db.from("communities").select("*").eq("status", "published").eq("visibility", "discover"),
     getFavorites(db),
+    getMyApplications(db),
   ]);
   if (error) throw error;
-  const categories = new Set(profile?.interestedCategories ?? []);
-  const regions = new Set(profile?.interestedRegions ?? []);
-  const savedCategories = new Set(favorites.map((item) => item.community.category));
-  const savedByCategory = new Map(favorites.map((item) => [item.community.category, item.community.name]));
+
+  const interests = [...new Set([...(profile?.interestedCategories ?? []), ...(profile?.interestCategories ?? [])])];
+  const regions = [...new Set(profile?.interestedRegions ?? [])];
+  const excludedCommunityIds = new Set([
+    ...favorites.map((item) => item.communityId),
+    ...applications.map((item) => item.communityId),
+  ]);
+  const hasPersonalization = interests.length > 0 || regions.some((region) => normalized(region) !== "전체");
   const now = Date.now();
 
-  return (data ?? []).map((row): RecommendedCommunity => {
-    const community = mapCommunity(row);
-    let score = 0;
-    const reasons: string[] = [];
-    const matchedCategory = [...categories].find((category) => community.category === category || community.category.includes(category) || category.includes(community.category) || community.tags.some((tag)=>tag.includes(category)));
-    if (matchedCategory) { score += 40; reasons.push(`\uAD00\uC2EC \uC788\uB294 ${matchedCategory} \uCE74\uD14C\uACE0\uB9AC\uC785\uB2C8\uB2E4.`); }
-    const regionSearchText = `${community.mainRegion} ${community.detailedRegion} ${community.customRegion ?? ""} ${community.name} ${community.shortDescription} ${community.tags.join(" ")}`;
-    const matchedRegion = [...regions].find((region) => region === "\uC804\uCCB4" || regionSearchText.includes(region));
-    if (matchedRegion) { score += 25; reasons.push(`\uAD00\uC2EC \uC9C0\uC5ED ${matchedRegion}\uC5D0\uC11C \uC9C4\uD589\uB429\uB2C8\uB2E4.`); }
-    if (savedCategories.has(community.category)) { score += 20; reasons.push(`\uC800\uC7A5\uD55C ${savedByCategory.get(community.category)}\uACFC \uBE44\uC2B7\uD569\uB2C8\uB2E4.`); }
-    if (calculateRecruitmentStatus(community) === "recruiting") { score += 10; reasons.push("\uD604\uC7AC \uBAA8\uC9D1 \uC911\uC785\uB2C8\uB2E4."); }
-    if (community.nextMeetingAt) {
-      const distance = new Date(community.nextMeetingAt).getTime() - now;
-      if (distance >= 0 && distance <= 14 * 86400000) { score += 5; reasons.push("\uB2E4\uC74C \uBAA8\uC784 \uC77C\uC815\uC774 \uAC00\uAE5D\uC2B5\uB2C8\uB2E4."); }
-    }
-    return { community, score, reasons };
-  }).filter((item) => item.score > 0)
+  return (data ?? []).map(mapCommunity)
+    .filter((community) => canRecommend(community, now) && !excludedCommunityIds.has(community.id))
+    .map((community): RecommendedCommunity => {
+    const interest = interestFit(community, interests);
+    const region = regionFit(community, regions);
+    const activity = activityFit(community, now);
+    const recruitment = calculateRecruitmentStatus(community) === "recruiting" ? 1 : 0;
+    const score = hasPersonalization
+      ? interest * recommendationWeights.interest
+        + region * recommendationWeights.region
+        + activity * recommendationWeights.activity
+        + recruitment * recommendationWeights.recruitment
+      : 0;
+    return { community, score };
+  })
     .sort((a, b) => b.score - a.score || new Date(b.community.createdAt).getTime() - new Date(a.community.createdAt).getTime())
     .slice(0, limit);
 }

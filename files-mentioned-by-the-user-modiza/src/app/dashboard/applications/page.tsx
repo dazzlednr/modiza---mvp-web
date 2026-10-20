@@ -64,7 +64,7 @@ export default function Page() {
     {error && <p className="error-summary">{error}</p>}
     <div className="filters" style={{ gridTemplateColumns: "2fr 1fr 1fr" }}>
       <input className="field" placeholder="이름 또는 연락처 검색" value={query} onChange={(event) => setQuery(event.target.value)} />
-      <select className="field" value={community} onChange={(event) => setCommunity(event.target.value)}><option value="all">모든 커뮤니티</option>{communities.map((name) => <option key={name}>{name}</option>)}</select>
+      <select className="field" value={community} onChange={(event) => setCommunity(event.target.value)}><option value="all">모든 모임</option>{communities.map((name) => <option key={name}>{name}</option>)}</select>
       <select className="field" value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">모든 상태</option><option value="pending">승인 대기</option><option value="approved">참가 확정</option><option value="rejected">참가 거절</option><option value="cancelled">신청 취소</option></select>
     </div>
     {list.length ? <div className="grid">{list.map((item) => <button type="button" className="panel" style={{ textAlign: "left" }} key={item.id} onClick={() => setSelected(item.id)}>
@@ -91,7 +91,7 @@ function ApplicationDialog({ app, close, update, onError }: {
   }
   return <div className="dialog-backdrop"><div className="dialog" style={{ maxHeight: "90vh", overflow: "auto" }}>
     <h2>{app.applicantName}님의 신청</h2>
-    <p><b>커뮤니티</b><br />{app.communityName}</p><p><b>연락처</b><br />{app.applicantContact}</p><p><b>자기소개</b><br />{app.introduction}</p><p><b>참여 동기</b><br />{app.motivation}</p>
+    <p><b>모임</b><br />{app.communityName}</p><p><b>연락처</b><br />{app.applicantContact}</p><p><b>자기소개</b><br />{app.introduction}</p><p><b>참여 동기</b><br />{app.motivation}</p>
     {Object.entries(app.answers).map(([question, answer]) => <p key={question}><b>{question}</b><br />{answer || "답변 없음"}</p>)}
     <label>운영자 메모<textarea className="field" rows={3} value={memo} onChange={(event) => setMemo(event.target.value)} /></label>
     <div className="management-actions" style={{ marginTop: 16 }}>

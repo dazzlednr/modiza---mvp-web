@@ -38,5 +38,5 @@ export function FavoriteButton({ communityId, initialFavorite, authenticated, re
     setLoading(false);
   }
 
-  return <button type="button" data-authenticated={authenticated} className={`favorite-button ${compact ? "compact" : ""} ${favorite ? "active" : ""}`} aria-label={favorite ? "\uAD00\uC2EC \uCEE4\uBBA4\uB2C8\uD2F0 \uD574\uC81C" : "\uAD00\uC2EC \uCEE4\uBBA4\uB2C8\uD2F0 \uC800\uC7A5"} aria-pressed={favorite} disabled={loading} onClick={(event) => { event.preventDefault(); event.stopPropagation(); void toggle(); }}><Heart fill={favorite ? "currentColor" : "none"} /></button>;
+  return <button type="button" data-authenticated={authenticated} className={`favorite-button ${compact ? "compact" : ""} ${favorite ? "active" : ""}`} aria-label={favorite ? "\uAD00\uC2EC 모임 \uD574\uC81C" : "\uAD00\uC2EC 모임 \uC800\uC7A5"} aria-pressed={favorite} disabled={loading} onClick={(event) => { event.preventDefault(); event.stopPropagation(); void toggle(); }}><Heart fill={favorite ? "currentColor" : "none"} /></button>;
 }

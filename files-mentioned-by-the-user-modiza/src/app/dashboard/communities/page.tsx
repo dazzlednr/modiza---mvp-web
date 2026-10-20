@@ -50,7 +50,7 @@ export default function Page() {
     setLoading(true);
     const response = await fetch("/api/communities", { cache: "no-store" });
     if (response.ok) setItems(await response.json());
-    else setError("커뮤니티 목록을 불러오지 못했어요.");
+    else setError("모임 목록을 불러오지 못했어요.");
     setLoading(false);
   }
 
@@ -70,17 +70,17 @@ export default function Page() {
   }
 
   async function remove(id: string) {
-    if (!confirm("이 커뮤니티를 비공개 상태로 전환할까요?")) return;
+    if (!confirm("이 모임을 비공개 상태로 전환할까요?")) return;
     await fetch(`/api/communities/${id}`, { method: "DELETE" });
     await load();
   }
 
-  if (loading) return <section className="section"><div className="container">내 커뮤니티를 불러오는 중...</div></section>;
+  if (loading) return <section className="section"><div className="container">내 모임을 불러오는 중...</div></section>;
 
   return <section className="section dashboard-shell"><div className="container">
     <div className="section-heading page-heading">
-      <div><p className="eyebrow">My communities</p><h1 className="section-title">내 커뮤니티</h1><p className="muted">현재 로그인한 계정이 운영하는 커뮤니티만 표시됩니다.</p></div>
-      <div className="management-actions"><Link className="btn btn-ghost" href="/dashboard/communities/space-requests">공간 요청 내역</Link><Link className="btn btn-primary" href="/communities/register">새 커뮤니티 만들기</Link></div>
+      <div><p className="eyebrow">My communities</p><h1 className="section-title">내 모임</h1><p className="muted">현재 로그인한 계정이 운영하는 모임만 표시됩니다.</p></div>
+      <div className="management-actions"><Link className="btn btn-ghost" href="/dashboard/communities/space-requests">공간 요청 내역</Link><Link className="btn btn-primary" href="/communities/register">새 모임 만들기</Link></div>
     </div>
     {error && <p className="error-summary">{error}</p>}
     {items.length ? <div className="management-list">
@@ -109,6 +109,6 @@ export default function Page() {
           <div className="community-management-chat"><OpenChatManager communityId={community.id} /></div>
         </div>
       </article>)}
-    </div> : <div className="empty"><Users size={40} /><h3>아직 운영 중인 커뮤니티가 없습니다.</h3><p className="muted">첫 커뮤니티를 만들고 지역의 취향을 연결해보세요.</p><Link className="btn btn-primary" href="/communities/register">첫 커뮤니티 만들기</Link></div>}
+    </div> : <div className="empty"><Users size={40} /><h3>아직 운영 중인 모임이 없습니다.</h3><p className="muted">첫 모임을 만들고 지역의 취향을 연결해보세요.</p><Link className="btn btn-primary" href="/communities/register">첫 모임 만들기</Link></div>}
   </div></section>;
 }

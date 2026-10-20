@@ -83,7 +83,7 @@ function OperatingHours({ space }: { space: PublicSpaceDetail }) {
 
 function CommunityAvailability({ space }: { space: PublicSpaceDetail }) {
   if (space.communityUseMode === "request_consultation") return <p className="muted">운영자와 일정을 협의한 뒤 이용할 수 있습니다.</p>;
-  if (!space.communityAvailability.length) return <p className="muted">커뮤니티 이용 가능 시간이 아직 등록되지 않았습니다.</p>;
+  if (!space.communityAvailability.length) return <p className="muted">모임 이용 가능 시간이 아직 등록되지 않았습니다.</p>;
   return <div className="detail-hours-list">{[...space.communityAvailability].sort((a, b) => a.dayOfWeek - b.dayOfWeek).map((item) => <div key={item.dayOfWeek} className="detail-hour-row"><strong>{DAY_NAMES[item.dayOfWeek]}요일</strong><span>{item.startTime}~{item.endTime}</span></div>)}</div>;
 }
 
@@ -118,7 +118,7 @@ export function SpaceDetailContent({ space, actions }: { space: PublicSpaceDetai
     </section>
 
     <section className="space-detail-section">
-      <h2>커뮤니티 이용 안내</h2>
+      <h2>모임 이용 안내</h2>
       <p className="usage-mode-label">{modeLabels[space.communityUseMode]}</p>
       <CommunityAvailability space={space} />
       {space.communityRecurrenceType === "date_range" && <p className="muted">적용 기간: {space.communityAvailabilityStartDate || "미정"} ~ {space.communityAvailabilityEndDate || "미정"}</p>}

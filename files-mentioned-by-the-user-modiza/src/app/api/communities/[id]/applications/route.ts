@@ -19,9 +19,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const id = (await params).id;
     const { data: row, error } = await supabase.from("communities").select("*").eq("id", id).eq("status", "published").maybeSingle();
     if (error) throw error;
-    if (!row) return NextResponse.json({ message: "참여 신청할 수 없는 커뮤니티예요." }, { status: 404 });
+    if (!row) return NextResponse.json({ message: "참여 신청할 수 없는 모임예요." }, { status: 404 });
     const community = await getCommunityBySlug(supabase, row.slug);
-    if (!community || community.recruitmentStatus !== "recruiting") return NextResponse.json({ message: "현재 모집 중인 커뮤니티가 아니에요." }, { status: 400 });
+    if (!community || community.recruitmentStatus !== "recruiting") return NextResponse.json({ message: "현재 모집 중인 모임이 아니에요." }, { status: 400 });
     if (community.recruitmentStartAt && new Date(community.recruitmentStartAt) > new Date()) return NextResponse.json({ message: "아직 모집이 시작되지 않았어요. 모집 시작일 이후에 신청해 주세요." }, { status: 400 });
     if (community.recruitmentEndAt && new Date(community.recruitmentEndAt) <= new Date()) return NextResponse.json({ message: "현재 모집이 마감되었어요." }, { status: 400 });
     if (community.currentMembers >= community.capacity) return NextResponse.json({ message: "모집 정원이 모두 찼어요." }, { status: 400 });

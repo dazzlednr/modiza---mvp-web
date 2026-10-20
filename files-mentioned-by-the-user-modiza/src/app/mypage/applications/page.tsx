@@ -39,7 +39,7 @@ export default function Page() {
     {items.length ? <div className="management-list">{items.map((item) => <article className="panel application-card" key={item.id}>
       <div className="section-heading"><div><span className={`tag application-${item.status}`}>{labels[item.status]}</span><h2>{item.communityName}</h2></div><ClipboardCheck /></div>
       <div className="management-metrics"><span>신청일 <b>{new Date(item.appliedAt).toLocaleDateString("ko-KR")}</b></span><span><CalendarDays />다음 모임 <b>{item.nextMeetingAt ? date(item.nextMeetingAt) : "미정"}</b></span></div>
-      <div className="management-actions"><Link className="btn btn-primary btn-small" href={`/mypage/applications/${item.id}`}>신청 상세</Link>{item.communitySlug && <Link className="btn btn-ghost btn-small" href={`/communities/${item.communitySlug}`}>커뮤니티 보기</Link>}{item.status === "pending" && <button className="btn btn-ghost btn-small" onClick={() => void cancel(item.id)}>신청 취소</button>}</div>
-    </article>)}</div> : <div className="empty"><ClipboardCheck size={40} /><h3>신청한 모임이 없습니다.</h3><p className="muted">새로운 취향과 사람을 만날 커뮤니티를 찾아보세요.</p><Link className="btn btn-primary" href="/communities">커뮤니티 둘러보기</Link></div>}
+      <div className="management-actions"><Link className="btn btn-primary btn-small" href={`/mypage/applications/${item.id}`}>신청 상세</Link>{item.communitySlug && <Link className="btn btn-ghost btn-small" href={`/communities/${item.communitySlug}`}>모임 보기</Link>}{item.status === "pending" && <button className="btn btn-ghost btn-small" onClick={() => void cancel(item.id)}>신청 취소</button>}</div>
+    </article>)}</div> : <div className="empty"><ClipboardCheck size={40} /><h3>신청한 모임이 없습니다.</h3><p className="muted">새로운 취향과 사람을 만날 모임을 찾아보세요.</p><Link className="btn btn-primary" href="/communities">모임 둘러보기</Link></div>}
   </div></section>;
 }
