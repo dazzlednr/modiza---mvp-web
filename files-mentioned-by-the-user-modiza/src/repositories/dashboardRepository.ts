@@ -7,15 +7,17 @@ import { getSchedulesForMyCommunities } from "@/repositories/scheduleRepository"
 import { getChecklistsForMyCommunities } from "@/repositories/checklistRepository";
 import { getMySpaces } from "@/repositories/spaceRepository";
 import { getFavorites, getRecommendedCommunities } from "@/repositories/favoriteRepository";
+import { getMyMeetings } from "@/repositories/meetingRepository";
 import type { Profile } from "@/types/profile";
 
 export async function getMemberDashboard(db: SupabaseClient, profile: Profile | null) {
-  const [applications, favorites, recommendations] = await Promise.all([
+  const [applications, favorites, recommendations, meetings] = await Promise.all([
     getMyApplications(db),
     getFavorites(db).catch(() => []),
     getRecommendedCommunities(db, profile, 5).catch(() => []),
+    getMyMeetings(db).catch(() => []),
   ]);
-  return { applications, favorites, recommendations };
+  return { applications, favorites, recommendations, meetings };
 }
 
 export async function getCommunityHostDashboard(db: SupabaseClient) {

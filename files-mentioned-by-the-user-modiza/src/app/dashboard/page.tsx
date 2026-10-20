@@ -13,6 +13,7 @@ import {
 } from "@/repositories/dashboardRepository";
 import { CommunityGrid } from "@/components/community";
 import { CommunityOperationsDashboard } from "@/components/dashboard/CommunityOperationsDashboard";
+import { MeetingCard } from "@/components/meeting/MeetingCard";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,7 @@ function DashboardTabs({ view, communityHost, spaceHost }: { view: DashboardView
 
 function QuickActions({ view }: { view: DashboardView }) {
   return <section className="panel"><div className="section-heading"><h2>빠른 실행</h2><Plus size={20} /></div><div className="quick-actions">
-    {view === "member" && <><Link href="/communities"><Compass />커뮤니티 둘러보기</Link><Link href="/mypage/applications"><ClipboardCheck />내 신청 확인</Link><Link href="/mypage/favorites"><Heart />관심 커뮤니티</Link><Link href="/mypage#profile"><Sparkles />관심사 수정</Link></>}
+    {view === "member" && <><Link href="/meetings/new"><Plus />새 모임 만들기</Link><Link href="/dashboard/meetings"><CalendarDays />내 모임 관리</Link><Link href="/communities"><Compass />커뮤니티 둘러보기</Link><Link href="/mypage/applications"><ClipboardCheck />내 신청 확인</Link><Link href="/mypage/favorites"><Heart />관심 커뮤니티</Link><Link href="/mypage#profile"><Sparkles />관심사 수정</Link></>}
     {view === "community" && <><Link href="/meetings/new"><Plus />새 모임 만들기</Link><Link href="/dashboard/meetings"><CalendarDays />내 모임 관리</Link><Link href="/communities/register"><Users />커뮤니티 만들기</Link><Link href="/dashboard/communities"><Users />내 커뮤니티 관리</Link><Link href="/dashboard/applications"><ClipboardCheck />신청자 관리</Link><Link href="/dashboard/schedules"><CalendarDays />기존 일정 관리</Link><Link href="/dashboard/checklists"><ListChecks />체크리스트</Link><Link href="/dashboard/communities/space-requests"><CalendarDays />공간 이용 요청</Link></>}
     {view === "space" && <><Link href="/spaces/register"><Building2 />공간 등록</Link><Link href="/dashboard/spaces"><Building2 />내 공간 관리</Link><Link href="/dashboard/spaces"><Pencil />공간 정보 수정</Link><Link href="/dashboard/spaces/requests"><CalendarDays />이용 요청 관리</Link></>}
   </div></section>;
@@ -56,6 +57,9 @@ function MemberDashboard({ data, communityHost, spaceHost }: { data: MemberData;
       <Link href="/mypage/favorites" className="dashboard-stat"><Heart /><span>관심 커뮤니티</span><strong>{data.favorites.length}</strong></Link>
       <Link href="/mypage/applications" className="dashboard-stat"><CalendarDays /><span>다음 참여 일정</span><strong className="dashboard-date-value">{nextMeeting ? koDate(nextMeeting) : "없음"}</strong></Link>
     </div>
+    <section className="dashboard-section"><div className="section-heading"><div><p className="eyebrow">Host activity</p><h2>내가 운영하는 모임</h2></div><Link href="/dashboard/meetings">전체 관리 →</Link></div>
+      {data.meetings.length ? <div className="meeting-card-grid">{data.meetings.slice(0, 3).map((meeting) => <MeetingCard key={meeting.id} meeting={meeting} management />)}</div> : <div className="empty compact"><CalendarDays size={32} /><h3>아직 운영 중인 모임이 없어요.</h3><p className="muted">첫 모임을 만들고 함께할 사람을 모집해보세요.</p><Link className="btn btn-primary" href="/meetings/new">모임 만들기</Link></div>}
+    </section>
     <section className="dashboard-section dashboard-recommendation-section"><div className="section-heading"><div><p className="eyebrow">For you</p><h2>회원님을 위한 추천</h2></div><Link href="/communities">더 보기 →</Link></div>
       {data.recommendations.length ? <div className="dashboard-recommendation-rail"><CommunityGrid className="dashboard-recommendation-grid" variant="dashboard" items={data.recommendations.map((item) => item.community)} favoriteIds={favoriteIds} authenticated reasons={Object.fromEntries(data.recommendations.map((item) => [item.community.id, item.reasons[0] ?? ""]))} /></div> : <div className="empty compact"><Sparkles size={32} /><p>관심사를 선택하면 맞춤 커뮤니티를 추천해 드려요.</p><Link className="btn btn-ghost" href="/mypage#profile">관심사 수정</Link></div>}
     </section>
