@@ -73,7 +73,8 @@ function MemberDashboard({ data, profile, nowIso }: { data: MemberData; profile:
   const upcoming = data.applications.filter((item) => (item.status === "pending" || item.status === "approved") && item.nextMeetingAt && new Date(item.nextMeetingAt).getTime() > now).sort((left, right) => new Date(left.nextMeetingAt!).getTime() - new Date(right.nextMeetingAt!).getTime()).slice(0, 3);
   const activities = getRecentActivities(data);
   const initialTasteCategories = profile?.interestedCategories.length ? profile.interestedCategories : profile?.interestCategories ?? [];
-  return <div className="dashboard-layout member-dashboard-layout"><main className="dashboard-main member-activity">
+  return <div className="member-dashboard">
+    <div className="dashboard-layout member-dashboard-layout"><main className="dashboard-main member-activity">
     <section className="dashboard-section upcoming-schedule-section"><div className="section-heading"><div><p className="eyebrow">Upcoming</p><h2>다가오는 일정</h2></div><Link href="/mypage/applications">전체 보기 →</Link></div>
       {upcoming.length ? <div className="upcoming-schedule-list">{upcoming.map((item) => {
         const schedule = <article className="upcoming-schedule-card"><div className="upcoming-schedule-icon"><CalendarDays /></div><div><strong>{item.communityName}</strong><p><Clock3 />{koDateTime(item.nextMeetingAt!)}</p><p><MapPin />{formatRegion(item.communityMainRegion ?? "대구", item.communityDetailedRegion, item.communityCustomRegion)}</p></div><span className={`tag application-${item.status}`}>{item.status === "approved" ? "참가 확정" : "승인 대기"}</span></article>;
@@ -89,10 +90,11 @@ function MemberDashboard({ data, profile, nowIso }: { data: MemberData; profile:
     <section className="dashboard-section"><div className="section-heading"><div><p className="eyebrow">Favorites</p><h2>관심 모임</h2></div><Link href="/mypage/favorites">전체 보기 →</Link></div>
       {data.favorites.length ? <CommunityGrid items={data.favorites.slice(0, 3).map((item) => item.community)} favoriteIds={favoriteIds} authenticated /> : <div className="empty compact"><Heart size={32} /><h3>아직 저장한 모임이 없어요.</h3><Link className="btn btn-ghost" href="/communities">관심 모임 찾기</Link></div>}
     </section>
+    </main><aside className="dashboard-side member-dashboard-sidebar"><MemberQuickActions activities={activities} notifications={data.notifications} initialCategories={initialTasteCategories} initialRegions={profile?.interestedRegions ?? []} /></aside></div>
     <section className="dashboard-section dashboard-recommendation-section"><div className="section-heading"><div><p className="eyebrow">For you</p><h2>회원님을 위한 추천</h2></div><Link href="/communities">더 보기 →</Link></div>
       {data.recommendations.length ? <div className="dashboard-recommendation-rail"><CommunityGrid className="dashboard-recommendation-grid" variant="dashboard" items={data.recommendations.map((item) => item.community)} favoriteIds={favoriteIds} authenticated /></div> : <div className="empty compact"><Sparkles size={32} /><p>공개된 모임이 등록되면 이곳에서 추천해 드려요.</p><Link className="btn btn-ghost" href="/mypage#profile">관심사 수정</Link></div>}
     </section>
-  </main><aside className="dashboard-side member-dashboard-sidebar"><MemberQuickActions activities={activities} notifications={data.notifications} initialCategories={initialTasteCategories} initialRegions={profile?.interestedRegions ?? []} /></aside></div>;
+  </div>;
 }
 
 function CommunityHostDashboard({ data, nowIso }: { data: CommunityData; nowIso: string }) {
