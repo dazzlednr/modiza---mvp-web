@@ -200,13 +200,11 @@ export function MeetingForm({
   }
 
   return <div className="meeting-editor">
-    <aside className="registration-guide"><CircleHelp /><div><strong>모디자가 알려드려요.</strong><p>모임 정보를 단계별로 입력하고, 마지막에 기존 공간 추천 결과를 확인할 수 있어요. 작성 중에는 언제든 임시 저장할 수 있습니다.</p></div></aside>
     <div className="meeting-editor-heading">
       <div><p className="eyebrow">Meeting setup</p><h1>{title}</h1><p>작성 중에는 최소 정보만 저장할 수 있고, 모집 시작 전에 필수 정보를 확인합니다.</p></div>
       {meeting && <span className={`tag meeting-status-${meeting.status}`}>{meeting.status === "draft" ? "준비 중" : meeting.status === "recruiting" ? "모집 중" : meeting.status === "closed" ? "모집 마감" : meeting.status === "completed" ? "종료" : "취소"}</span>}
     </div>
     {error && <p className="error-summary" role="alert">{error}</p>}
-    <section className="panel registration-progress" aria-label="모임 등록 진행률"><div className="section-heading"><div><p className="eyebrow">Meeting progress</p><h2>모임 등록</h2></div><strong>{Math.round((step / steps.length) * 100)}%</strong></div><div className="progress-track"><i style={{ width: `${(step / steps.length) * 100}%` }} /></div><div className="registration-progress-items">{steps.map((label, index) => <span className={step === index + 1 ? "active" : step > index + 1 ? "done" : ""} key={label}>{step > index + 1 ? "✓" : "○"} {label}</span>)}</div></section>
     <nav className="meeting-stepper" aria-label="모임 작성 단계">
       {steps.map((label, index) => {
         const number = index + 1;
