@@ -40,7 +40,7 @@ export function MemberQuickActions({ activities, notifications, initialCategorie
     <section className="panel member-sidebar-panel member-quick-actions">
       <div className="section-heading"><div><p className="eyebrow">Quick action</p><h2>빠른 실행</h2></div><Compass /></div>
       <nav className="member-quick-action-list" aria-label="빠른 실행 메뉴">
-        <Link href="/dashboard?view=member"><Compass /><span>모임 둘러보기</span></Link>
+        <Link href="/communities"><Compass /><span>모임 둘러보기</span></Link>
         <button type="button" onClick={() => setOpenDialog("activities")}><Clock3 /><span>최근 활동</span></button>
         <button type="button" onClick={() => setOpenDialog("taste")}><Settings2 /><span>내 취향 설정</span></button>
         <button type="button" onClick={() => setOpenDialog("news")}><Bell /><span>모임 소식</span></button>
