@@ -16,7 +16,7 @@ export function mapCommunity(row: any): Community {
     recruitmentEndAt: row.recruitment_end_at, nextMeetingAt: row.next_meeting_at,
     meetingEndAt: row.meeting_end_at, capacity: row.capacity ?? 1,
     currentMembers: row.current_members ?? 0, participationFee: row.participation_fee ?? row.fee ?? 0,
-    participationType: row.participation_type, targetAudience: row.target_audience ?? "",
+    participationType: row.participation_type, visibility: row.visibility ?? "discover", participantEligibility: row.participant_eligibility ?? "anyone", targetAudience: row.target_audience ?? "",
     rules: row.rules ?? "", preparationItems: row.preparation_items ?? "",
     activityDescription: row.activity_description ?? "", moodTags: row.mood_tags ?? [],
     requiredFacilities: row.required_facilities ?? [], indoorOutdoor: row.indoor_outdoor ?? "indoor",
@@ -45,6 +45,8 @@ const payload = (values: Partial<CommunityFormValues>) => ({
   ...(values.capacity !== undefined && { capacity: values.capacity }),
   ...(values.participationFee !== undefined && { participation_fee: values.participationFee, fee: values.participationFee, fee_type: values.participationFee > 0 ? "paid" : "free" }),
   ...(values.participationType !== undefined && { participation_type: values.participationType }),
+  ...(values.visibility !== undefined && { visibility: values.visibility }),
+  ...(values.participantEligibility !== undefined && { participant_eligibility: values.participantEligibility }),
   ...(values.recruitmentStatus !== undefined && { recruitment_status: values.recruitmentStatus }),
   ...(values.recruitmentStartAt !== undefined && { recruitment_start_at: values.recruitmentStartAt || null }),
   ...(values.recruitmentEndAt !== undefined && { recruitment_end_at: values.recruitmentEndAt || null }),
@@ -82,7 +84,7 @@ function createSlug(name: string) {
 }
 
 export async function getPublishedCommunities(db: SupabaseClient) {
-  const { data, error } = await db.from("communities").select("*").eq("status", "published").order("created_at", { ascending: false });
+  const { data, error } = await db.from("communities").select("*").eq("status", "published").eq("visibility", "discover").order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []).map(mapCommunity);
 }
