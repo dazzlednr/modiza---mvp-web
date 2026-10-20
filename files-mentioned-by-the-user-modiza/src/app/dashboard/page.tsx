@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   Bell, Building2, CalendarDays, CheckCircle2, ClipboardCheck,
-  Clock3, Compass, Heart, MapPin, Pencil, Plus, Sparkles, Users, X,
+  Clock3, Compass, Heart, MapPin, Pencil, Plus, Sparkles, Users,
 } from "lucide-react";
 import { requireUser } from "@/lib/auth/access";
 import { hasRole } from "@/lib/auth/roles";
@@ -14,7 +14,7 @@ import {
 } from "@/repositories/dashboardRepository";
 import { CommunityGrid } from "@/components/community";
 import { CommunityOperationsDashboard } from "@/components/dashboard/CommunityOperationsDashboard";
-import { MemberTasteSettings } from "@/components/dashboard/MemberTasteSettings";
+import { MemberQuickActions } from "@/components/dashboard/MemberQuickActions";
 import { formatRegion } from "@/constants/taxonomy";
 import type { Profile } from "@/types/profile";
 
@@ -92,16 +92,7 @@ function MemberDashboard({ data, profile, nowIso }: { data: MemberData; profile:
     <section className="dashboard-section dashboard-recommendation-section"><div className="section-heading"><div><p className="eyebrow">For you</p><h2>회원님을 위한 추천</h2></div><Link href="/communities">더 보기 →</Link></div>
       {data.recommendations.length ? <div className="dashboard-recommendation-rail"><CommunityGrid className="dashboard-recommendation-grid" variant="dashboard" items={data.recommendations.map((item) => item.community)} favoriteIds={favoriteIds} authenticated /></div> : <div className="empty compact"><Sparkles size={32} /><p>공개된 모임이 등록되면 이곳에서 추천해 드려요.</p><Link className="btn btn-ghost" href="/mypage#profile">관심사 수정</Link></div>}
     </section>
-  </main><aside className="dashboard-side member-dashboard-sidebar">
-    <section className="panel member-sidebar-panel"><div className="section-heading"><div><p className="eyebrow">Quick action</p><h2>빠른 실행</h2></div><Compass /></div><div className="quick-actions"><Link href="/dashboard?view=member"><Compass />모임 둘러보기</Link></div></section>
-    <section className="panel member-sidebar-panel"><div className="section-heading"><div><p className="eyebrow">Recent activity</p><h2>최근 활동</h2></div><Clock3 /></div>
-      {activities.length ? <div className="member-activity-feed">{activities.map((activity) => { const icon = activity.icon === "favorite" ? <Heart /> : activity.icon === "cancelled" ? <X /> : <ClipboardCheck />; const content = <><i>{icon}</i><span><b>{activity.label}</b><small>{koDate(activity.date)}</small></span></>; return activity.href ? <Link href={activity.href} key={activity.id}>{content}</Link> : <div key={activity.id}>{content}</div>; })}</div> : <div className="member-sidebar-empty"><Clock3 /><p>아직 직접 수행한 활동이 없어요.</p></div>}
-    </section>
-    <MemberTasteSettings initialCategories={initialTasteCategories} initialRegions={profile?.interestedRegions ?? []} />
-    <section className="panel member-sidebar-panel"><div className="section-heading"><div><p className="eyebrow">Updates</p><h2>모임 소식</h2></div><Bell /></div>
-      {data.notifications.length ? <div className="member-news-feed">{data.notifications.map((item) => { const content = <><b>{item.title}</b><p>{item.message}</p><small>{koDate(item.createdAt)}</small></>; return item.link ? <Link href={item.link} key={item.id}>{content}</Link> : <article key={item.id}>{content}</article>; })}</div> : <div className="member-sidebar-empty"><Bell /><p>확인할 모임 소식이 없어요.</p></div>}
-    </section>
-  </aside></div>;
+  </main><aside className="dashboard-side member-dashboard-sidebar"><MemberQuickActions activities={activities} notifications={data.notifications} initialCategories={initialTasteCategories} initialRegions={profile?.interestedRegions ?? []} /></aside></div>;
 }
 
 function CommunityHostDashboard({ data, nowIso }: { data: CommunityData; nowIso: string }) {
