@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   Bell, Building2, CalendarDays, CheckCircle2, ClipboardCheck,
-  Compass, Heart, Pencil, Plus, Sparkles, Users,
+  Clock3, Compass, Heart, MapPin, Pencil, Plus, Sparkles, Users, X,
 } from "lucide-react";
 import { requireUser } from "@/lib/auth/access";
 import { hasRole } from "@/lib/auth/roles";
@@ -14,6 +14,9 @@ import {
 } from "@/repositories/dashboardRepository";
 import { CommunityGrid } from "@/components/community";
 import { CommunityOperationsDashboard } from "@/components/dashboard/CommunityOperationsDashboard";
+import { MemberTasteSettings } from "@/components/dashboard/MemberTasteSettings";
+import { formatRegion } from "@/constants/taxonomy";
+import type { Profile } from "@/types/profile";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +27,27 @@ type SpaceData = Awaited<ReturnType<typeof getSpaceHostDashboard>>;
 
 const applicationLabels = { pending: "검토중", approved: "승인", rejected: "거절", cancelled: "취소" } as const;
 const koDate = (value: Date | string) => new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium" }).format(new Date(value));
+const koDateTime = (value: Date | string) => new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric", weekday: "short", hour: "numeric", minute: "2-digit" }).format(new Date(value));
+
+type MemberActivity = { id: string; label: string; date: string; href: string | null; icon: "application" | "cancelled" | "favorite" };
+
+function getRecentActivities(data: MemberData): MemberActivity[] {
+  const applications = data.applications.map((item): MemberActivity => ({
+    id: `application-${item.id}`,
+    label: item.status === "cancelled" ? `${item.communityName} 참가 신청을 취소했어요.` : `${item.communityName}에 참가 신청했어요.`,
+    date: item.status === "cancelled" ? item.updatedAt : item.appliedAt,
+    href: item.communitySlug ? `/communities/${item.communitySlug}` : null,
+    icon: item.status === "cancelled" ? "cancelled" : "application",
+  }));
+  const favorites = data.favorites.map((item): MemberActivity => ({
+    id: `favorite-${item.id}`,
+    label: `${item.community.name}을 관심 모임에 저장했어요.`,
+    date: item.createdAt,
+    href: `/communities/${item.community.slug}`,
+    icon: "favorite",
+  }));
+  return [...applications, ...favorites].sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime()).slice(0, 5);
+}
 
 function normalizeView(value?: string): DashboardView {
   return value === "community" || value === "space" ? value : "member";
@@ -43,9 +67,19 @@ function QuickActions({ view }: { view: DashboardView }) {
   </div></section>;
 }
 
-function MemberDashboard({ data }: { data: MemberData }) {
+function MemberDashboard({ data, profile, nowIso }: { data: MemberData; profile: Profile | null; nowIso: string }) {
   const favoriteIds = data.favorites.map((item) => item.communityId);
-  return <main className="dashboard-main member-activity">
+  const now = new Date(nowIso).getTime();
+  const upcoming = data.applications.filter((item) => (item.status === "pending" || item.status === "approved") && item.nextMeetingAt && new Date(item.nextMeetingAt).getTime() > now).sort((left, right) => new Date(left.nextMeetingAt!).getTime() - new Date(right.nextMeetingAt!).getTime()).slice(0, 3);
+  const activities = getRecentActivities(data);
+  const initialTasteCategories = profile?.interestedCategories.length ? profile.interestedCategories : profile?.interestCategories ?? [];
+  return <div className="dashboard-layout member-dashboard-layout"><main className="dashboard-main member-activity">
+    <section className="dashboard-section upcoming-schedule-section"><div className="section-heading"><div><p className="eyebrow">Upcoming</p><h2>다가오는 일정</h2></div><Link href="/mypage/applications">전체 보기 →</Link></div>
+      {upcoming.length ? <div className="upcoming-schedule-list">{upcoming.map((item) => {
+        const schedule = <article className="upcoming-schedule-card"><div className="upcoming-schedule-icon"><CalendarDays /></div><div><strong>{item.communityName}</strong><p><Clock3 />{koDateTime(item.nextMeetingAt!)}</p><p><MapPin />{formatRegion(item.communityMainRegion ?? "대구", item.communityDetailedRegion, item.communityCustomRegion)}</p></div><span className={`tag application-${item.status}`}>{item.status === "approved" ? "참가 확정" : "승인 대기"}</span></article>;
+        return item.communitySlug ? <Link className="upcoming-schedule-link" href={`/communities/${item.communitySlug}`} key={item.id}>{schedule}</Link> : <div key={item.id}>{schedule}</div>;
+      })}</div> : <div className="member-sidebar-empty"><CalendarDays /><p>참여 예정인 일정이 없어요.</p></div>}
+    </section>
     <section className="dashboard-section"><div className="section-heading"><div><p className="eyebrow">My activity</p><h2>내가 신청한 모임</h2></div><Link href="/mypage/applications">전체 보기 →</Link></div>
       {data.applications.length ? <div className="dashboard-list application-card-list">{data.applications.slice(0, 4).map((item) => {
         const card = <article className="dashboard-row application-card"><div className="application-card-image"><Image src={item.communityThumbnailUrl || "/community-placeholder.svg"} alt="" fill sizes="72px" /></div><div><strong>{item.communityName}</strong><p>{item.nextMeetingAt ? `일정 ${koDate(item.nextMeetingAt)}` : `신청일 ${koDate(item.appliedAt)}`}</p></div><span className={`tag application-${item.status}`}>{applicationLabels[item.status]}</span></article>;
@@ -58,7 +92,16 @@ function MemberDashboard({ data }: { data: MemberData }) {
     <section className="dashboard-section dashboard-recommendation-section"><div className="section-heading"><div><p className="eyebrow">For you</p><h2>회원님을 위한 추천</h2></div><Link href="/communities">더 보기 →</Link></div>
       {data.recommendations.length ? <div className="dashboard-recommendation-rail"><CommunityGrid className="dashboard-recommendation-grid" variant="dashboard" items={data.recommendations.map((item) => item.community)} favoriteIds={favoriteIds} authenticated /></div> : <div className="empty compact"><Sparkles size={32} /><p>공개된 모임이 등록되면 이곳에서 추천해 드려요.</p><Link className="btn btn-ghost" href="/mypage#profile">관심사 수정</Link></div>}
     </section>
-  </main>;
+  </main><aside className="dashboard-side member-dashboard-sidebar">
+    <section className="panel member-sidebar-panel"><div className="section-heading"><div><p className="eyebrow">Quick action</p><h2>빠른 실행</h2></div><Compass /></div><div className="quick-actions"><Link href="/dashboard?view=member"><Compass />모임 둘러보기</Link></div></section>
+    <section className="panel member-sidebar-panel"><div className="section-heading"><div><p className="eyebrow">Recent activity</p><h2>최근 활동</h2></div><Clock3 /></div>
+      {activities.length ? <div className="member-activity-feed">{activities.map((activity) => { const icon = activity.icon === "favorite" ? <Heart /> : activity.icon === "cancelled" ? <X /> : <ClipboardCheck />; const content = <><i>{icon}</i><span><b>{activity.label}</b><small>{koDate(activity.date)}</small></span></>; return activity.href ? <Link href={activity.href} key={activity.id}>{content}</Link> : <div key={activity.id}>{content}</div>; })}</div> : <div className="member-sidebar-empty"><Clock3 /><p>아직 직접 수행한 활동이 없어요.</p></div>}
+    </section>
+    <MemberTasteSettings initialCategories={initialTasteCategories} initialRegions={profile?.interestedRegions ?? []} />
+    <section className="panel member-sidebar-panel"><div className="section-heading"><div><p className="eyebrow">Updates</p><h2>모임 소식</h2></div><Bell /></div>
+      {data.notifications.length ? <div className="member-news-feed">{data.notifications.map((item) => { const content = <><b>{item.title}</b><p>{item.message}</p><small>{koDate(item.createdAt)}</small></>; return item.link ? <Link href={item.link} key={item.id}>{content}</Link> : <article key={item.id}>{content}</article>; })}</div> : <div className="member-sidebar-empty"><Bell /><p>확인할 모임 소식이 없어요.</p></div>}
+    </section>
+  </aside></div>;
 }
 
 function CommunityHostDashboard({ data, nowIso }: { data: CommunityData; nowIso: string }) {
@@ -95,14 +138,15 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
   const nickname = profile?.nickname ?? String(user.user_metadata?.nickname ?? user.email?.split("@")[0] ?? "회원");
   const today = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "full" }).format(new Date());
   const db = await createAuthServerSupabaseClient();
+  const nowIso = new Date().toISOString();
   const viewLabel = requestedView === "member" ? "내 활동" : requestedView === "community" ? "모임 운영 관리" : "공간 운영";
 
   let content: React.ReactNode;
   if (requestedView === "community" && !communityHost) content = <RoleStartNotice view="community" />;
   else if (requestedView === "space" && !spaceHost) content = <RoleStartNotice view="space" />;
-  else if (requestedView === "community") content = <CommunityHostDashboard data={await getCommunityHostDashboard(db)} nowIso={new Date().toISOString()} />;
+  else if (requestedView === "community") content = <CommunityHostDashboard data={await getCommunityHostDashboard(db)} nowIso={nowIso} />;
   else if (requestedView === "space") content = <SpaceHostDashboard data={await getSpaceHostDashboard(db)} />;
-  else content = <MemberDashboard data={await getMemberDashboard(db, profile)} />;
+  else content = <MemberDashboard data={await getMemberDashboard(db, profile)} profile={profile} nowIso={nowIso} />;
 
   return <section className="section dashboard-shell"><div className="container">
     <div className="dashboard-hero"><div><p className="eyebrow">{viewLabel}</p><h1>안녕하세요, <strong>{nickname}님</strong></h1><p>{today} · {requestedView === "member" ? "나의 참여와 관심 활동을 확인해보세요." : requestedView === "community" ? "모임 운영에 필요한 현황을 확인해보세요." : "등록한 공간의 상태와 정보를 확인해보세요."}</p></div><Link className="btn btn-ghost" href="/mypage"><Users size={18} />프로필 관리</Link></div>

@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { apiAuthStatus, requireApiUser } from "@/lib/auth/api";
 import { personalizationCategories, personalizationRegions } from "@/constants/personalization";
+import { communityCategories, normalizeCommunityCategories } from "@/constants/taxonomy";
 import { updateProfile } from "@/repositories/profileRepository";
 
 const schema = z.object({
-  categories: z.array(z.enum(personalizationCategories)).max(5),
+  categories: z.array(z.string()).max(5).refine((categories) => categories.every((category) => personalizationCategories.includes(category as never) || communityCategories.includes(category as never))),
   regions: z.array(z.enum(personalizationRegions)).max(3),
 });
 
@@ -14,7 +15,7 @@ export async function PUT(request: Request) {
     const input = schema.parse(await request.json());
     const { supabase, user } = await requireApiUser();
     const profile = await updateProfile(supabase, user.id, {
-      interestedCategories: input.categories,
+      interestedCategories: normalizeCommunityCategories(input.categories),
       interestedRegions: input.regions,
     });
     return NextResponse.json(profile);

@@ -1,26 +1,26 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ApplicationStatus, CommunityApplication, CreateCommunityApplicationInput } from "@/types/community";
 
-const map = (row: any): CommunityApplication => ({ id: row.id, communityId: row.community_id, communityName: row.community_name ?? row.communities?.name ?? "", applicantUserId: row.applicant_user_id, applicantName: row.applicant_name, applicantContact: row.applicant_contact, introduction: row.introduction, motivation: row.motivation, answers: row.answers ?? {}, status: row.status, operatorMemo: row.operator_memo, appliedAt: row.applied_at ?? row.created_at, updatedAt: row.updated_at, communitySlug: row.communities?.slug, communityThumbnailUrl: row.communities?.thumbnail_url ?? null, nextMeetingAt: row.communities?.next_meeting_at });
+const map = (row: any): CommunityApplication => ({ id: row.id, communityId: row.community_id, communityName: row.community_name ?? row.communities?.name ?? "", applicantUserId: row.applicant_user_id, applicantName: row.applicant_name, applicantContact: row.applicant_contact, introduction: row.introduction, motivation: row.motivation, answers: row.answers ?? {}, status: row.status, operatorMemo: row.operator_memo, appliedAt: row.applied_at ?? row.created_at, updatedAt: row.updated_at, communitySlug: row.communities?.slug, communityThumbnailUrl: row.communities?.thumbnail_url ?? null, communityMainRegion: row.communities?.main_region ?? null, communityDetailedRegion: row.communities?.detailed_region ?? null, communityCustomRegion: row.communities?.custom_region ?? null, nextMeetingAt: row.communities?.next_meeting_at });
 async function currentUserId(db: SupabaseClient) { const { data: { user }, error } = await db.auth.getUser(); if (error || !user) throw new Error("AUTH_REQUIRED"); return user.id; }
 
 export async function getMyApplications(db: SupabaseClient) {
   const userId = await currentUserId(db);
-  const { data, error } = await db.from("community_applications").select("*,communities(name,slug,next_meeting_at,thumbnail_url)").eq("applicant_user_id", userId).order("created_at", { ascending: false });
+  const { data, error } = await db.from("community_applications").select("*,communities(name,slug,next_meeting_at,thumbnail_url,main_region,detailed_region,custom_region)").eq("applicant_user_id", userId).order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []).map(map);
 }
 
 export async function getMyApplicationById(db: SupabaseClient, applicationId: string) {
   const userId = await currentUserId(db);
-  const { data, error } = await db.from("community_applications").select("*,communities(name,slug,next_meeting_at,thumbnail_url)").eq("id", applicationId).eq("applicant_user_id", userId).maybeSingle();
+  const { data, error } = await db.from("community_applications").select("*,communities(name,slug,next_meeting_at,thumbnail_url,main_region,detailed_region,custom_region)").eq("id", applicationId).eq("applicant_user_id", userId).maybeSingle();
   if (error) throw error;
   return data ? map(data) : null;
 }
 
 export async function getApplicationsForMyCommunities(db: SupabaseClient) {
   const userId = await currentUserId(db);
-  const { data, error } = await db.from("community_applications").select("*,communities!inner(name,slug,next_meeting_at,thumbnail_url,owner_id)").eq("communities.owner_id", userId).order("created_at", { ascending: false });
+  const { data, error } = await db.from("community_applications").select("*,communities!inner(name,slug,next_meeting_at,thumbnail_url,main_region,detailed_region,custom_region,owner_id)").eq("communities.owner_id", userId).order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []).map(map);
 }
@@ -28,7 +28,7 @@ export const listApplications = getApplicationsForMyCommunities;
 
 export async function getApplicationForOwner(db: SupabaseClient, id: string) {
   const userId = await currentUserId(db);
-  const { data, error } = await db.from("community_applications").select("*,communities!inner(name,slug,next_meeting_at,thumbnail_url,owner_id)").eq("id", id).eq("communities.owner_id", userId).maybeSingle();
+  const { data, error } = await db.from("community_applications").select("*,communities!inner(name,slug,next_meeting_at,thumbnail_url,main_region,detailed_region,custom_region,owner_id)").eq("id", id).eq("communities.owner_id", userId).maybeSingle();
   if (error) throw error;
   return data ? map(data) : null;
 }
