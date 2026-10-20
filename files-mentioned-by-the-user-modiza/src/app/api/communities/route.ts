@@ -12,7 +12,7 @@ import {
 import { createInitialCommunitySchedule } from "@/repositories/scheduleRepository";
 import { getApplicationsForMyCommunities } from "@/repositories/applicationRepository";
 import { getSpaceById } from "@/repositories/spaceRepository";
-import { createSpaceUseRequest, getLatestRequestByCommunity } from "@/repositories/spaceUseRequestRepository";
+import { getLatestRequestByCommunity } from "@/repositories/spaceUseRequestRepository";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { CommunityFormSchema, type CommunityFormValues } from "@/types/community";
 import { PRIMARY_REGION } from "@/constants/taxonomy";
@@ -110,10 +110,6 @@ export async function POST(request: Request) {
   try {
     db = (await requireApiUser("community_host")).supabase;
     const form = await request.formData();
-    const requestedSpaceValue = String(form.get("requestedSpaceId") ?? "").trim();
-    const requestedSpaceId = requestedSpaceValue
-      ? z.string().uuid().parse(requestedSpaceValue)
-      : null;
     const status = String(form.get("status"));
     if (status !== "draft" && status !== "published") {
       return NextResponse.json(
@@ -165,7 +161,7 @@ export async function POST(request: Request) {
     if (status === "published" && values.detailedRegion === "기타" && !values.customRegion?.trim()) return NextResponse.json({ message: "기타 지역명을 입력해 주세요.", fieldErrors: { customRegion: "기타 지역명을 입력해 주세요." } }, { status: 400 });
     if (status === "published" && new Date(values.nextMeetingAt).getTime() < Date.now() + 60 * 60 * 1000) return NextResponse.json({ message: "모임 시작은 현재부터 1시간보다 뒤로 설정해 주세요.", fieldErrors: { nextMeetingAt: "미래 일시를 선택해 주세요." } }, { status: 400 });
 
-    const selectedSpaceId = requestedSpaceId ?? values.linkedSpaceId ?? null;
+    const selectedSpaceId = values.linkedSpaceId ?? null;
     const space = selectedSpaceId
       ? await getSpaceById(db, selectedSpaceId)
       : null;
@@ -224,35 +220,9 @@ export async function POST(request: Request) {
       }
     }
 
-    let spaceRequestCreated = false;
-    if (status === "published" && requestedSpaceId && space) {
-      const start = new Date(values.nextMeetingAt);
-      const end = values.meetingEndAt
-        ? new Date(values.meetingEndAt)
-        : new Date(start.getTime() + values.expectedDurationHours * 60 * 60 * 1000);
-      const formatTime = (value: Date) => value.toLocaleTimeString("sv-SE", {
-        timeZone: "Asia/Seoul",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
-      await createSpaceUseRequest(db, {
-        spaceId: requestedSpaceId,
-        communityId: community.id,
-        purpose: values.activityDescription || values.shortDescription,
-        requestedDate: start.toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" }),
-        requestedStartTime: formatTime(start),
-        requestedEndTime: formatTime(end),
-        expectedAttendees: values.capacity,
-        message: `${community.name} 모임의 공간 이용을 신청합니다.`,
-        idempotencyKey: crypto.randomUUID(),
-      });
-      spaceRequestCreated = true;
-    }
-
     const saved = await getCommunityByIdForDashboard(db, community.id);
     if (!saved) throw new Error("CREATED_COMMUNITY_NOT_FOUND");
-    return NextResponse.json({ ...saved, scheduleWarning, spaceRequestCreated }, { status: 201 });
+    return NextResponse.json({ ...saved, scheduleWarning, spaceRequestCreated: false }, { status: 201 });
   } catch (error) {
     const authStatus = apiAuthStatus(error);
     if (authStatus) return NextResponse.json({ message: error instanceof Error ? error.message : "권한이 없어요." }, { status: authStatus });
