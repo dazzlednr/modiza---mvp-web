@@ -79,7 +79,7 @@ export function Header({ user }: { user: HeaderUser }) {
         </nav>
 
         <div className="actions">
-          <Link className="btn btn-ghost header-action" href="/meetings/new">모임 만들기</Link>
+          <Link className="btn btn-ghost header-action" href="/communities/register">모임 만들기</Link>
           <Link className="btn btn-ghost header-action" href="/spaces/register">공간 등록</Link>
           {user ? (
             <>
@@ -174,7 +174,7 @@ export function Header({ user }: { user: HeaderUser }) {
             </section>
             <section>
               <strong>등록</strong>
-              <Link href="/meetings/new" onClick={closeMobile}>모임 만들기</Link>
+              <Link href="/communities/register" onClick={closeMobile}>모임 만들기</Link>
               <Link href="/communities/register" onClick={closeMobile}>커뮤니티 등록</Link>
               <Link href="/spaces/register" onClick={closeMobile}>공간 등록</Link>
             </section>
@@ -227,5 +227,5 @@ export function Header({ user }: { user: HeaderUser }) {
 }
 
 export function Footer() {
-  return <footer className="footer"><div className="container footer-grid"><div><div className="logo">MODI<span>ZA</span></div><p className="muted">모임 운영자의 반복 업무를 줄이는 운영 SaaS</p></div><div className="meta"><Link href="/support">모디자 소개</Link><a href="#">이용약관</a><a href="#">개인정보처리방침</a><Link href="/meetings/new">모임 만들기</Link><Link href="/communities/register">커뮤니티 등록</Link><Link href="/spaces/register">공간 등록</Link><a href="mailto:hello@modiza.kr">문의하기</a></div></div></footer>;
+  return <footer className="footer"><div className="container footer-grid"><div><div className="logo">MODI<span>ZA</span></div><p className="muted">모임 운영자의 반복 업무를 줄이는 운영 SaaS</p></div><div className="meta"><Link href="/support">모디자 소개</Link><a href="#">이용약관</a><a href="#">개인정보처리방침</a><Link href="/communities/register">모임 만들기</Link><Link href="/communities/register">커뮤니티 등록</Link><Link href="/spaces/register">공간 등록</Link><a href="mailto:hello@modiza.kr">문의하기</a></div></div></footer>;
 }

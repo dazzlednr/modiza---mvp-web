@@ -36,7 +36,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
           <p className="muted" style={{ fontSize: 18, lineHeight: 1.7 }}>독립 모임부터 커뮤니티의 여러 모임까지<br />운영과 참여를 한곳에서 시작해보세요.</p>
           <div className="meta" style={{ marginTop: 28 }}>
             <Link className="btn btn-primary" href="/meetings">모임 둘러보기 <ArrowRight size={17} /></Link>
-            <Link className="btn btn-ghost" href="/meetings/new">모임 만들기</Link>
+            <Link className="btn btn-ghost" href="/communities/register">모임 만들기</Link>
           </div>
         </div>
         <div className="hero-art">
