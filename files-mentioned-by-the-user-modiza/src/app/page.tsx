@@ -3,11 +3,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, CalendarDays, Heart, MapPin } from "lucide-react";
 import { CommunityExplorer, CommunityGrid } from "@/components/community";
+import { MeetingCard } from "@/components/meeting/MeetingCard";
 import { FavoriteButton } from "@/components/community/FavoriteButton";
 import {createAuthServerSupabaseClient} from "@/lib/supabase/server";
 import {listCommunities} from "@/repositories/communityRepository";
 import {getFavoriteIds,getRecommendedCommunities} from "@/repositories/favoriteRepository";
 import {getProfileByUserId} from "@/repositories/profileRepository";
+import {listPublicMeetings} from "@/repositories/meetingRepository";
 import { representativeRegions } from "@/constants/regions";
 export const dynamic="force-dynamic";
 
@@ -18,7 +20,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
     redirect(`/auth/callback?code=${encodeURIComponent(query.code)}&next=${encodeURIComponent(next)}`);
   }
   const db=await createAuthServerSupabaseClient();
-  const [communities,auth]=await Promise.all([listCommunities(db),db.auth.getUser()]);
+  const [communities,meetings,auth]=await Promise.all([listCommunities(db),listPublicMeetings(db),db.auth.getUser()]);
   const profile=auth.data.user?await getProfileByUserId(db,auth.data.user.id).catch(()=>null):null;
   const favoriteIds=auth.data.user?await getFavoriteIds(db).catch(()=>[]):[];
   const recommendations=auth.data.user?await getRecommendedCommunities(db,profile,5).catch(()=>[]):[];
@@ -31,10 +33,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
             <span className="hero-title-line">취향이 맞는 사람들과</span>
             <span className="hero-title-line"><strong>우리만의 모임</strong>을 시작해요.</span>
           </h1>
-          <p className="muted" style={{ fontSize: 18, lineHeight: 1.7 }}>대구의 다채로운 커뮤니티를 발견하고<br />새로운 사람들과 관심사를 나눠보세요.</p>
+          <p className="muted" style={{ fontSize: 18, lineHeight: 1.7 }}>독립 모임부터 커뮤니티의 여러 모임까지<br />운영과 참여를 한곳에서 시작해보세요.</p>
           <div className="meta" style={{ marginTop: 28 }}>
-            <Link className="btn btn-primary" href="/communities">커뮤니티 둘러보기 <ArrowRight size={17} /></Link>
-            <Link className="btn btn-ghost" href="/communities/register">커뮤니티 만들기</Link>
+            <Link className="btn btn-primary" href="/meetings">모임 둘러보기 <ArrowRight size={17} /></Link>
+            <Link className="btn btn-ghost" href="/meetings/new">모임 만들기</Link>
           </div>
         </div>
         <div className="hero-art">
@@ -42,6 +44,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
           <div className="floating"><Heart fill="var(--primary)" color="var(--primary)" size={18} /> 오늘, 새로운 취향을 만나요</div>
         </div>
       </div>
+    </section>
+
+    <section className="section" style={{ background: "var(--background-secondary)" }}>
+      <div className="container"><div className="section-heading page-heading"><div><p className="eyebrow">Recruiting meetings</p><h2 className="section-title">지금 모집 중인 모임</h2><p className="muted">커뮤니티 가입과 별개로, 관심 있는 개별 모임을 먼저 만나보세요.</p></div><Link href="/meetings">전체 보기 →</Link></div>{meetings.length ? <div className="meeting-card-grid">{meetings.slice(0,3).map((meeting)=><MeetingCard key={meeting.id} meeting={meeting}/>)}</div> : <div className="empty compact"><CalendarDays size={32}/><p>운영자가 모집을 시작한 모임이 이곳에 표시됩니다.</p></div>}</div>
     </section>
 
     <section className="section">
