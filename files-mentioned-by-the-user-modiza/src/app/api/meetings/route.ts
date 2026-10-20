@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiAuthStatus, requireApiUser } from "@/lib/auth/api";
 import { assertMeetingReady, getMeetingErrorMessage } from "@/lib/meeting/validation";
-import { changeMyMeetingStatus, createMeetingDraft, getMyMeetings, isMeetingsMigrationPending } from "@/repositories/meetingRepository";
+import { changeMyMeetingStatus, createMeetingDraft, getMyMeetings, isMeetingsMigrationPending, uploadMeetingImage } from "@/repositories/meetingRepository";
 import { MeetingInputSchema } from "@/types/meeting";
 
 function errorResponse(error: unknown) {
@@ -24,11 +24,19 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const { supabase } = await requireApiUser("community_host");
-    const body = await request.json();
-    const input = MeetingInputSchema.parse(body.meeting ?? body);
-    if (body.startRecruiting === true) assertMeetingReady(input);
+    const isMultipart = request.headers.get("content-type")?.includes("multipart/form-data");
+    const body = isMultipart ? await request.formData() : await request.json();
+    const rawInput = isMultipart ? JSON.parse(String(body.get("meeting") ?? "{}")) : body.meeting ?? body;
+    const startRecruiting = isMultipart ? String(body.get("startRecruiting")) === "true" : body.startRecruiting === true;
+    const image = isMultipart ? body.get("image") : null;
+    if (image instanceof File && (image.size > 5_242_880 || !["image/jpeg", "image/png", "image/webp"].includes(image.type))) {
+      return NextResponse.json({ message: "대표 이미지는 JPG, PNG, WebP 형식의 5MB 이하 파일만 가능해요." }, { status: 400 });
+    }
+    const input = MeetingInputSchema.parse(rawInput);
+    if (startRecruiting) assertMeetingReady(input);
     let meeting = await createMeetingDraft(supabase, input);
-    if (body.startRecruiting === true) meeting = await changeMyMeetingStatus(supabase, meeting.id, "recruiting");
+    if (image instanceof File && image.size) await uploadMeetingImage(supabase, meeting.id, image);
+    if (startRecruiting) meeting = await changeMyMeetingStatus(supabase, meeting.id, "recruiting");
     return NextResponse.json(meeting, { status: 201 });
   } catch (error) {
     return errorResponse(error);

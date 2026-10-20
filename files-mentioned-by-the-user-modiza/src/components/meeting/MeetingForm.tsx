@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, CircleHelp, Link2, Save, Users } from "lucide-react";
+import { CalendarDays, CircleHelp, ImagePlus, Link2, Save, Users } from "lucide-react";
 import type { Meeting, MeetingInput } from "@/types/meeting";
 
 type CommunityOption = { id: string; name: string };
+type SpaceOption = { id: string; name: string; address: string; addressDetail?: string | null; thumbnailUrl?: string | null };
 type MeetingFormState = Omit<MeetingInput, "capacity" | "participationFee"> & {
   capacity: string;
   participationFee: string;
@@ -57,16 +58,20 @@ export function MeetingForm({
   communities,
   initial,
   meeting,
+  spaces = [],
 }: {
   communities: CommunityOption[];
   initial?: Partial<MeetingInput>;
   meeting?: Meeting | null;
+  spaces?: SpaceOption[];
 }) {
   const router = useRouter();
   const [form, setForm] = useState<MeetingFormState>(() => initialState(meeting ?? initial));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [step, setStep] = useState(1);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [spaceId, setSpaceId] = useState("");
   const canStartRecruiting = !meeting || meeting.status === "draft" || meeting.status === "closed";
   const title = meeting ? "모임 정보 수정" : "모임 기본 정보 작성";
 
@@ -105,11 +110,11 @@ export function MeetingForm({
     setError("");
     try {
       const meetingInput = input();
-      const response = await fetch(meeting ? `/api/meetings/${meeting.id}` : "/api/meetings", {
-        method: meeting ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(meeting ? meetingInput : { meeting: meetingInput, startRecruiting }),
-      });
+      const body = new FormData();
+      body.set("meeting", JSON.stringify(meeting ? meetingInput : meetingInput));
+      if (!meeting) body.set("startRecruiting", String(startRecruiting));
+      if (imageFile) body.set("image", imageFile);
+      const response = await fetch(meeting ? `/api/meetings/${meeting.id}` : "/api/meetings", { method: meeting ? "PATCH" : "POST", body });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "모임을 저장하지 못했어요.");
       if (meeting && startRecruiting && meeting.status !== "recruiting") {
@@ -161,7 +166,8 @@ export function MeetingForm({
           <div className="section-heading"><div><span>1</span><h2>기본 정보</h2></div><CalendarDays /></div>
           <div className="form form-grid">
             <label>모임 이름<input className="field" value={form.title} maxLength={100} onChange={(event) => set("title", event.target.value)} placeholder="예: 퇴근 후 글쓰기 모임" /></label>
-            <label>대표 이미지 URL <small className="muted">선택</small><input className="field" type="url" value={form.imageUrl ?? ""} onChange={(event) => set("imageUrl", event.target.value || null)} placeholder="https://..." /></label>
+            <label className="upload meeting-image-upload"><ImagePlus aria-hidden="true" /><strong>대표 이미지 추가</strong><small className="muted">JPG, PNG, WebP · 5MB 이하</small><input className="field" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0] ?? null; if (file && file.size > 5_242_880) { setError("대표 이미지는 5MB 이하로 선택해 주세요."); return; } setImageFile(file); }} /></label>
+            {(imageFile || form.imageUrl) && <p className="meeting-image-name">{imageFile ? `새 이미지: ${imageFile.name}` : "현재 대표 이미지가 등록되어 있어요."}</p>}
             <label style={{ gridColumn: "1 / -1" }}>한 줄 소개<textarea className="field" rows={2} maxLength={180} value={form.shortDescription} onChange={(event) => set("shortDescription", event.target.value)} placeholder="어떤 경험을 함께 나누는 모임인지 알려주세요." /></label>
             <label style={{ gridColumn: "1 / -1" }}>상세 소개<textarea className="field" rows={7} value={form.description} onChange={(event) => set("description", event.target.value)} placeholder="진행 방식과 함께하고 싶은 사람을 자유롭게 적어주세요." /></label>
           </div>
@@ -172,6 +178,7 @@ export function MeetingForm({
           <div className="form form-grid">
             <label>진행 날짜<input className="field" type="date" value={form.eventDate ?? ""} onChange={(event) => set("eventDate", event.target.value || null)} /></label>
             <div className="meeting-time-grid"><label>시작 시간<input className="field" type="time" value={form.startTime ?? ""} onChange={(event) => set("startTime", event.target.value || null)} /></label><label>종료 시간<input className="field" type="time" value={form.endTime ?? ""} onChange={(event) => set("endTime", event.target.value || null)} /></label></div>
+            <label style={{ gridColumn: "1 / -1" }}>기존 장소 선택 <small className="muted">미리 등록된 공간에서 선택</small><select className="field" value={spaceId} onChange={(event) => { const id = event.target.value; const space = spaces.find((item) => item.id === id); setSpaceId(id); if (space) { setForm((current) => ({ ...current, location: [space.name, space.address, space.addressDetail].filter(Boolean).join(" · "), locationIsUndecided: false })); } }}><option value="">장소를 선택해 주세요</option>{spaces.map((space) => <option key={space.id} value={space.id}>{space.name} · {space.address}</option>)}</select></label>
             <label className="meeting-checkbox" style={{ gridColumn: "1 / -1" }}><input type="checkbox" checked={form.locationIsUndecided} onChange={(event) => set("locationIsUndecided", event.target.checked)} /><span><strong>장소 미정</strong><small>모집을 먼저 시작하고 장소는 나중에 정할 수 있어요.</small></span></label>
             {!form.locationIsUndecided && <label style={{ gridColumn: "1 / -1" }}>장소<input className="field" value={form.location ?? ""} onChange={(event) => set("location", event.target.value || null)} placeholder="도로명 주소 또는 장소명" /></label>}
           </div>

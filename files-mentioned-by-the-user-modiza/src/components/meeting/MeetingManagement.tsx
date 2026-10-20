@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Copy, ExternalLink, Pencil, Plus } from "lucide-react";
+import { ExternalLink, Pencil, Plus, Repeat2 } from "lucide-react";
 import { MeetingCard } from "@/components/meeting/MeetingCard";
 import { allowedMeetingStatusTransitions, meetingStatusLabels } from "@/lib/meeting/validation";
 import type { Meeting, MeetingStatus } from "@/types/meeting";
@@ -44,10 +44,10 @@ export function MeetingManagement({ initialItems }: { initialItems: Meeting[] })
     try {
       const response = await fetch(`/api/meetings/${id}/duplicate`, { method: "POST" });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.message || "모임을 복제하지 못했어요.");
+      if (!response.ok) throw new Error(result.message || "다음 모임을 만들지 못했어요.");
       setItems((current) => [result, ...current]);
     } catch (duplicateError) {
-      setError(duplicateError instanceof Error ? duplicateError.message : "모임을 복제하지 못했어요.");
+      setError(duplicateError instanceof Error ? duplicateError.message : "다음 모임을 만들지 못했어요.");
     } finally {
       setBusy(null);
     }
@@ -62,7 +62,7 @@ export function MeetingManagement({ initialItems }: { initialItems: Meeting[] })
       <div className="meeting-management-actions">
         <Link className="btn btn-ghost btn-small" href={`/dashboard/meetings/${meeting.id}/edit`}><Pencil />수정</Link>
         {meeting.status !== "draft" && <Link className="btn btn-ghost btn-small" href={`/meetings/${meeting.slug}`}><ExternalLink />공개 화면</Link>}
-        <button className="btn btn-ghost btn-small" type="button" disabled={busy === meeting.id} onClick={() => duplicate(meeting.id)}><Copy />복제</button>
+        <button className="btn btn-ghost btn-small" type="button" disabled={busy === meeting.id} onClick={() => duplicate(meeting.id)}><Repeat2 />다음 모임 운영하기</button>
         {allowedMeetingStatusTransitions[meeting.status].map((next) => <button key={next} className={`btn btn-small ${next === "cancelled" ? "btn-danger" : next === "recruiting" ? "btn-primary" : "btn-ghost"}`} type="button" disabled={busy === meeting.id} onClick={() => status(meeting.id, next)}>{next === "recruiting" && meeting.status === "closed" ? "모집 재개" : meetingStatusLabels[next]}</button>)}
       </div>
     </div>)}</div> : <div className="empty"><h2>조건에 맞는 모임이 없어요.</h2><p className="muted">독립 모임이나 커뮤니티에 연결된 모임을 만들어보세요.</p><Link className="btn btn-primary" href="/meetings/new"><Plus />첫 모임 만들기</Link></div>}

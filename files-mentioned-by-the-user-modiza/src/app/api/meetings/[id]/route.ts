@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiAuthStatus, requireApiUser } from "@/lib/auth/api";
 import { getMeetingErrorMessage } from "@/lib/meeting/validation";
-import { getMyMeetingById, isMeetingsMigrationPending, updateMyMeeting } from "@/repositories/meetingRepository";
+import { getMyMeetingById, isMeetingsMigrationPending, updateMyMeeting, uploadMeetingImage } from "@/repositories/meetingRepository";
 import { MeetingInputSchema } from "@/types/meeting";
 
 function responseError(error: unknown) {
@@ -26,8 +26,17 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const { supabase } = await requireApiUser("community_host");
-    const input = MeetingInputSchema.parse(await request.json());
-    return NextResponse.json(await updateMyMeeting(supabase, (await context.params).id, input));
+    const isMultipart = request.headers.get("content-type")?.includes("multipart/form-data");
+    const body = isMultipart ? await request.formData() : await request.json();
+    const rawInput = isMultipart ? JSON.parse(String(body.get("meeting") ?? "{}")) : body;
+    const image = isMultipart ? body.get("image") : null;
+    if (image instanceof File && (image.size > 5_242_880 || !["image/jpeg", "image/png", "image/webp"].includes(image.type))) {
+      return NextResponse.json({ message: "대표 이미지는 JPG, PNG, WebP 형식의 5MB 이하 파일만 가능해요." }, { status: 400 });
+    }
+    const id = (await context.params).id;
+    const meeting = await updateMyMeeting(supabase, id, MeetingInputSchema.parse(rawInput));
+    if (image instanceof File && image.size) await uploadMeetingImage(supabase, id, image);
+    return NextResponse.json(image instanceof File && image.size ? { ...meeting, imageUrl: await getMyMeetingById(supabase, id).then((updated) => updated?.imageUrl ?? meeting.imageUrl) } : meeting);
   } catch (error) {
     return responseError(error);
   }

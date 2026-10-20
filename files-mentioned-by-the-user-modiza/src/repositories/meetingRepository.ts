@@ -147,6 +147,23 @@ export async function createMeetingDraft(db: SupabaseClient, value: MeetingInput
   return mapMeeting(data);
 }
 
+export async function uploadMeetingImage(db: SupabaseClient, meetingId: string, file: File) {
+  const ownerId = await currentUserId(db);
+  const meeting = await getMyMeetingById(db, meetingId);
+  if (!meeting) throw new Error("MEETING_NOT_FOUND");
+  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+  const path = `${ownerId}/meetings/${meetingId}/${crypto.randomUUID()}.${ext}`;
+  const upload = await db.storage.from("community-images").upload(path, file, { contentType: file.type, upsert: false });
+  if (upload.error) throw upload.error;
+  const url = db.storage.from("community-images").getPublicUrl(path).data.publicUrl;
+  const update = await db.from("meetings").update({ image_url: url }).eq("id", meetingId).eq("owner_id", ownerId);
+  if (update.error) {
+    await db.storage.from("community-images").remove([path]);
+    throw update.error;
+  }
+  return url;
+}
+
 export async function updateMyMeeting(db: SupabaseClient, id: string, value: MeetingInput) {
   const ownerId = await currentUserId(db);
   await assertOwnedCommunity(db, value.communityId, ownerId);
@@ -186,7 +203,7 @@ export async function duplicateMyMeeting(db: SupabaseClient, id: string) {
     community_id: source.communityId,
     source_meeting_id: source.id,
     slug: createSlug(`${source.title}-copy`),
-    title: `${source.title} 복사본`,
+    title: `${source.title} 다음 모임`,
     short_description: source.shortDescription,
     description: source.description,
     image_url: source.imageUrl,
