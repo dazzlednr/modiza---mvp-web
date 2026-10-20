@@ -6,7 +6,7 @@ import { ArrowLeft, Sparkles } from "lucide-react";
 import { MeetingForm } from "@/components/meeting/MeetingForm";
 import type { MeetingAiAnswers, MeetingAiDraft } from "@/types/meeting";
 
-type CommunityOption = { id: string; name: string };
+type CommunityOption = { id: string; name: string; category?: string; detailedRegion?: string | null; moodTags?: string[]; activityDescription?: string | null; budgetMax?: number; expectedDurationHours?: number; requiredFacilities?: string[]; foodDrinkNeeded?: boolean };
 type SpaceOption = { id: string; name: string; address: string; addressDetail?: string | null; thumbnailUrl?: string | null };
 
 const initialAnswers: MeetingAiAnswers = { purpose: "", audience: "", format: "", atmosphere: "", notes: "" };

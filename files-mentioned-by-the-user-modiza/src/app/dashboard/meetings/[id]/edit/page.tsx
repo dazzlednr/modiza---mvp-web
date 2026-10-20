@@ -13,5 +13,5 @@ export default async function EditMeetingPage({ params }: { params: Promise<{ id
   const db = await createAuthServerSupabaseClient();
   const [meeting, communities, spaces] = await Promise.all([getMyMeetingById(db, (await params).id), getMyCommunities(db), getActiveSpaces(db)]);
   if (!meeting) notFound();
-  return <section className="section meeting-editor-page"><div className="container"><MeetingForm meeting={meeting} communities={communities.map(({ id, name }) => ({ id, name }))} spaces={spaces.map(({ id, name, address, addressDetail, thumbnailUrl }) => ({ id, name, address, addressDetail, thumbnailUrl }))} /></div></section>;
+  return <section className="section meeting-editor-page"><div className="container"><MeetingForm meeting={meeting} communities={communities.map(({ id, name, category, detailedRegion, moodTags, activityDescription, budgetMax, expectedDurationHours, requiredFacilities, foodDrinkNeeded }) => ({ id, name, category, detailedRegion, moodTags, activityDescription, budgetMax, expectedDurationHours, requiredFacilities, foodDrinkNeeded }))} spaces={spaces.map(({ id, name, address, addressDetail, thumbnailUrl }) => ({ id, name, address, addressDetail, thumbnailUrl }))} /></div></section>;
 }

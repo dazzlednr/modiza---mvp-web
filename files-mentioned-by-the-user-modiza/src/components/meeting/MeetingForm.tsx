@@ -1,11 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { CalendarDays, CircleHelp, ImagePlus, Link2, Save, Users } from "lucide-react";
 import type { Meeting, MeetingInput } from "@/types/meeting";
+import type { CommunitySpaceRecommendation } from "@/lib/space/communityRecommendation";
+import { communityCategories, communityMoods, normalizeSubRegion, type CommunityCategory } from "@/constants/taxonomy";
 
-type CommunityOption = { id: string; name: string };
+type CommunityOption = { id: string; name: string; category?: string; detailedRegion?: string | null; moodTags?: string[]; activityDescription?: string | null; budgetMax?: number; expectedDurationHours?: number; requiredFacilities?: string[]; foodDrinkNeeded?: boolean };
 type SpaceOption = { id: string; name: string; address: string; addressDetail?: string | null; thumbnailUrl?: string | null };
 type MeetingFormState = Omit<MeetingInput, "capacity" | "participationFee"> & {
   capacity: string;
@@ -71,7 +74,13 @@ export function MeetingForm({
   const [error, setError] = useState("");
   const [step, setStep] = useState(1);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [spaceId, setSpaceId] = useState("");
+  const [spaceId, setSpaceId] = useState(() => {
+    const currentLocation = meeting?.location ?? initial?.location;
+    return spaces.find((space) => currentLocation?.startsWith(space.name))?.id ?? "";
+  });
+  const [recommendations, setRecommendations] = useState<CommunitySpaceRecommendation[]>([]);
+  const [recommendLoading, setRecommendLoading] = useState(false);
+  const [recommendError, setRecommendError] = useState("");
   const canStartRecruiting = !meeting || meeting.status === "draft" || meeting.status === "closed";
   const title = meeting ? "모임 정보 수정" : "모임 기본 정보 작성";
 
@@ -80,8 +89,52 @@ export function MeetingForm({
   const defaultRecruitmentEndAt = form.eventDate && form.startTime ? `${form.eventDate}T${form.startTime}` : null;
   const effectiveRecruitmentEndAt = form.recruitmentEndAt ?? defaultRecruitmentEndAt;
 
+  function recommendationInput() {
+    const category = selectedCommunity?.category ?? "취미";
+    const duration = form.startTime && form.endTime
+      ? Math.max(0.5, (new Date(`1970-01-01T${form.endTime}`).getTime() - new Date(`1970-01-01T${form.startTime}`).getTime()) / 3_600_000)
+      : selectedCommunity?.expectedDurationHours ?? 2;
+    return {
+      category: (communityCategories.includes(category as CommunityCategory) ? category : "취미") as CommunityCategory,
+      activityDescription: selectedCommunity?.activityDescription || form.description || form.shortDescription || form.title,
+      moods: selectedCommunity?.moodTags?.length ? selectedCommunity.moodTags : [communityMoods[0]],
+      capacity: Math.max(1, Number(form.capacity) || 1),
+      facilities: selectedCommunity?.requiredFacilities ?? [],
+      foodDrinkNeeded: selectedCommunity?.foodDrinkNeeded ?? false,
+      detailedRegion: normalizeSubRegion(selectedCommunity?.detailedRegion),
+      budgetMax: selectedCommunity?.budgetMax ?? 0,
+      expectedDurationHours: duration,
+      meetingStartAt: form.eventDate && form.startTime ? `${form.eventDate}T${form.startTime}` : new Date(Date.now() + 86_400_000).toISOString(),
+      meetingEndAt: form.eventDate && form.endTime ? `${form.eventDate}T${form.endTime}` : undefined,
+      meetingFrequencyType: "one_time",
+    };
+  }
+
+  async function loadRecommendations() {
+    setRecommendLoading(true);
+    setRecommendError("");
+    try {
+      const response = await fetch("/api/community-space-recommendations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(recommendationInput()) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "공간 추천을 불러오지 못했어요.");
+      setRecommendations(result.results ?? []);
+    } catch (recommendationError) {
+      setRecommendations([]);
+      setRecommendError(recommendationError instanceof Error ? recommendationError.message : "공간 추천을 불러오지 못했어요.");
+    } finally {
+      setRecommendLoading(false);
+    }
+  }
+
+  function selectRecommendedSpace(space: CommunitySpaceRecommendation) {
+    const location = [space.name, space.details.address, space.details.addressDetail].filter(Boolean).join(" · ");
+    setSpaceId(space.id);
+    setForm((current) => ({ ...current, location, locationIsUndecided: false }));
+  }
+
   function set<K extends keyof MeetingFormState>(key: K, value: MeetingFormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
+    if (["title", "shortDescription", "description", "eventDate", "startTime", "endTime", "capacity"].includes(String(key))) setRecommendations([]);
   }
 
   function input(): MeetingInput {
@@ -179,6 +232,7 @@ export function MeetingForm({
             <label>진행 날짜<input className="field" type="date" value={form.eventDate ?? ""} onChange={(event) => set("eventDate", event.target.value || null)} /></label>
             <div className="meeting-time-grid"><label>시작 시간<input className="field" type="time" value={form.startTime ?? ""} onChange={(event) => set("startTime", event.target.value || null)} /></label><label>종료 시간<input className="field" type="time" value={form.endTime ?? ""} onChange={(event) => set("endTime", event.target.value || null)} /></label></div>
             <label style={{ gridColumn: "1 / -1" }}>기존 장소 선택 <small className="muted">미리 등록된 공간에서 선택</small><select className="field" value={spaceId} onChange={(event) => { const id = event.target.value; const space = spaces.find((item) => item.id === id); setSpaceId(id); if (space) { setForm((current) => ({ ...current, location: [space.name, space.address, space.addressDetail].filter(Boolean).join(" · "), locationIsUndecided: false })); } }}><option value="">장소를 선택해 주세요</option>{spaces.map((space) => <option key={space.id} value={space.id}>{space.name} · {space.address}</option>)}</select></label>
+            <div className="meeting-recommendation-panel" style={{ gridColumn: "1 / -1" }}><div className="section-heading"><div><strong>모임 정보로 공간 추천받기</strong><p className="muted">현재 입력한 모임 종류·소개·인원·일정 조건을 기존 추천 로직에 전달합니다.</p></div><button className="btn btn-ghost btn-small" type="button" disabled={recommendLoading} onClick={() => void loadRecommendations()}>{recommendLoading ? "추천 중..." : recommendations.length ? "조건으로 다시 추천" : "맞춤 공간 추천"}</button></div>{recommendError && <p className="error-summary" role="alert">{recommendError}</p>}{recommendations.length > 0 && <div className="meeting-recommendation-list">{recommendations.slice(0, 3).map((space) => <article className={`meeting-recommendation-card ${form.location?.startsWith(space.name) ? "selected" : ""}`} key={space.id}>{space.thumbnailUrl ? <div className="meeting-recommendation-thumb"><Image src={space.thumbnailUrl} alt="" fill sizes="76px" /></div> : <div className="meeting-recommendation-placeholder"><ImagePlus /></div>}<div><strong>{space.name}</strong><p>{space.location} · 최대 {space.maxCapacity}명</p><small>{space.reasons[0] ?? "입력 조건과 잘 맞는 공간"}</small><button className="btn btn-primary btn-small" type="button" onClick={() => selectRecommendedSpace(space)}>{form.location?.startsWith(space.name) ? "선택됨" : "이 공간 선택"}</button></div></article>)}</div>}</div>
             <label className="meeting-checkbox" style={{ gridColumn: "1 / -1" }}><input type="checkbox" checked={form.locationIsUndecided} onChange={(event) => set("locationIsUndecided", event.target.checked)} /><span><strong>장소 미정</strong><small>모집을 먼저 시작하고 장소는 나중에 정할 수 있어요.</small></span></label>
             {!form.locationIsUndecided && <label style={{ gridColumn: "1 / -1" }}>장소<input className="field" value={form.location ?? ""} onChange={(event) => set("location", event.target.value || null)} placeholder="도로명 주소 또는 장소명" /></label>}
           </div>
