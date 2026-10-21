@@ -60,10 +60,12 @@ export type ApplicationDecisionResult = {
   openChatRegistered: boolean;
 };
 
+export type ApplicationDecisionStatus = Extract<ApplicationStatus, "approved" | "rejected">;
+
 export async function updateApplicationStatusAsOwner(
   db: SupabaseClient,
   id: string,
-  status: ApplicationStatus,
+  status: ApplicationDecisionStatus,
   operatorMemo?: string | null,
 ): Promise<ApplicationDecisionResult> {
   const { data, error } = await db.rpc("process_community_application_decision", {

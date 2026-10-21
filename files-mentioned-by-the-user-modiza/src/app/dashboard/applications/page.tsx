@@ -95,8 +95,10 @@ function ApplicationDialog({ app, close, update, onError }: {
     {Object.entries(app.answers).map(([question, answer]) => <p key={question}><b>{question}</b><br />{answer || "답변 없음"}</p>)}
     <label>운영자 메모<textarea className="field" rows={3} value={memo} onChange={(event) => setMemo(event.target.value)} /></label>
     <div className="management-actions" style={{ marginTop: 16 }}>
-      <button type="button" className="btn btn-primary" disabled={Boolean(busy) || app.status === "approved"} onClick={() => void decide("approved")}>{busy === "approved" ? "처리 중..." : app.status === "approved" ? "참가 확정됨" : "참가 확정"}</button>
-      <button type="button" className="btn btn-ghost" disabled={Boolean(busy) || app.status === "rejected"} onClick={() => void decide("rejected")}>{busy === "rejected" ? "처리 중..." : app.status === "rejected" ? "참가 거절됨" : "참가 거절"}</button>
+      {app.status === "pending" ? <>
+        <button type="button" className="btn btn-primary" disabled={Boolean(busy)} onClick={() => void decide("approved")}>{busy === "approved" ? "처리 중..." : "참가 확정"}</button>
+        <button type="button" className="btn btn-ghost" disabled={Boolean(busy)} onClick={() => void decide("rejected")}>{busy === "rejected" ? "처리 중..." : "참가 거절"}</button>
+      </> : <p className="muted">이미 처리된 신청이에요. 참가 상태는 변경할 수 없어요.</p>}
     </div>
     <button type="button" className="btn btn-ghost" style={{ marginTop: 16 }} disabled={Boolean(busy)} onClick={close}>닫기</button>
   </div></div>;
